@@ -74,12 +74,21 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     console.warn(`[player] Audio error for: ${nowPlaying?.title} (consecutive: ${consecutiveErrors})`);
     set({ lastError: errMsg });
     useToastStore.getState().addToast("播放失败，已跳过", "error");
+    const dur = audioPlayer.durationMs;
+    if (!Number.isNaN(dur) && dur > 0) {
+      set({ durationMs: dur });
+    }
     if (consecutiveErrors > 3) {
       console.error("[player] Too many consecutive errors, stopping auto-skip.");
       consecutiveErrors = 0;
       return;
     }
     get().next();
+  });
+
+  audioPlayer.setMediaCallbacks({
+    onNext: () => get().next(),
+    onPrevious: () => get().previous(),
   });
 
   wsClient.on("now_changed", (payload) => {
@@ -175,6 +184,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
           }
         }, 500);
       }
+      audioPlayer.updateMetadata(item.title ?? "", item.artist ?? "", item.coverUrl ?? "");
       set({ nowPlaying: item, progressMs: 0, lastError: null });
       if (item.type === "song" && item.songId) {
         api.reportPlay({

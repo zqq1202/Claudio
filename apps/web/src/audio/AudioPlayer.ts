@@ -1,6 +1,11 @@
 type Listener = () => void;
 type TimeListener = (current: number, duration: number) => void;
 
+interface MediaCallbacks {
+  onNext: () => void;
+  onPrevious: () => void;
+}
+
 class AudioPlayerManager {
   private audio: HTMLAudioElement;
   private onPlayListeners: Listener[] = [];
@@ -9,6 +14,7 @@ class AudioPlayerManager {
   private onErrorListeners: Listener[] = [];
   private onTimeListeners: TimeListener[] = [];
   private pendingPlay = false;
+  private mediaCallbacks: MediaCallbacks = { onNext: () => {}, onPrevious: () => {} };
 
   constructor() {
     this.audio = new Audio();
@@ -26,6 +32,41 @@ class AudioPlayerManager {
     });
     this.audio.addEventListener("timeupdate", () => {
       this.onTimeListeners.forEach((fn) => fn(this.audio.currentTime * 1000, this.audio.duration * 1000 || 0));
+    });
+
+    this.registerMediaSessionHandlers();
+  }
+
+  private registerMediaSessionHandlers() {
+    if (!("mediaSession" in navigator)) return;
+    const ms = navigator.mediaSession!;
+    ms.setActionHandler("play", () => this.play());
+    ms.setActionHandler("pause", () => this.pause());
+    ms.setActionHandler("previoustrack", () => this.mediaCallbacks.onPrevious());
+    ms.setActionHandler("nexttrack", () => this.mediaCallbacks.onNext());
+    ms.setActionHandler("seekto", (details) => {
+      if (details.seekTime != null) {
+        const el = this.audio as HTMLMediaElement & { fastSeek?: (time: number) => void };
+        if (typeof el.fastSeek === "function") {
+          el.fastSeek(details.seekTime);
+        } else {
+          this.audio.currentTime = details.seekTime;
+        }
+      }
+    });
+  }
+
+  setMediaCallbacks(cb: MediaCallbacks) {
+    this.mediaCallbacks = cb;
+  }
+
+  updateMetadata(title: string, artist: string, coverUrl: string) {
+    if (!("mediaSession" in navigator)) return;
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title,
+      artist,
+      album: "Claudio",
+      artwork: coverUrl ? [{ src: coverUrl }] : [],
     });
   }
 
