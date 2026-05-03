@@ -1,8 +1,11 @@
 import { usePlayerStore } from "../stores/playerStore";
 
 export default function PlayerControls() {
-  const { nowPlaying, isPlaying, togglePlay, next, previous, progressMs, durationMs, setProgress } =
-    usePlayerStore();
+  const {
+    nowPlaying, isPlaying, togglePlay, next, previous,
+    progressMs, durationMs, setProgress,
+    volume, isMuted, setVolume, toggleMute,
+  } = usePlayerStore();
 
   const formatTime = (ms: number) => {
     const s = Math.floor(ms / 1000);
@@ -10,6 +13,8 @@ export default function PlayerControls() {
     const sec = s % 60;
     return `${m}:${sec.toString().padStart(2, "0")}`;
   };
+
+  const volumeIcon = isMuted || volume === 0 ? "&#128263;" : volume < 0.5 ? "&#128265;" : "&#128266;";
 
   return (
     <div className="player-bar-inner">
@@ -60,7 +65,19 @@ export default function PlayerControls() {
       </div>
 
       <div className="player-bar-right">
-        <span className="volume-icon">&#128266;</span>
+        <button className="volume-btn" onClick={toggleMute} title={isMuted ? "Unmute" : "Mute"}>
+          <span dangerouslySetInnerHTML={{ __html: volumeIcon }} />
+        </button>
+        <input
+          type="range"
+          className="volume-slider"
+          min={0}
+          max={1}
+          step={0.01}
+          value={isMuted ? 0 : volume}
+          onChange={(e) => setVolume(Number(e.target.value))}
+          title={`Volume: ${Math.round((isMuted ? 0 : volume) * 100)}%`}
+        />
       </div>
     </div>
   );

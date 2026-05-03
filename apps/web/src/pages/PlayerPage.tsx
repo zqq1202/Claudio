@@ -8,6 +8,7 @@ import IntentInput from "../components/IntentInput";
 import ChatArea, { type ChatMessage } from "../components/ChatArea";
 import QueueList from "../components/QueueList";
 import AudioVisualizer from "../components/AudioVisualizer";
+import SearchPanel from "../components/SearchPanel";
 import { api } from "../api/client";
 import { wsClient } from "../api/ws";
 
@@ -24,7 +25,10 @@ type ModeKey = (typeof VISUAL_MODES)[number]["key"];
 
 export default function PlayerPage() {
   const {
-    nowPlaying, queue, scene, djStatus, isPlaying, needsUserAction, progressMs, durationMs, fetchNow, playItem, userActionPlay,
+    nowPlaying, queue, scene, djStatus, isPlaying, needsUserAction, progressMs, durationMs,
+    fetchNow, playItem, userActionPlay,
+    shuffle, repeatMode, toggleShuffle, cycleRepeat,
+    lastError, clearError,
   } = usePlayerStore();
   const { t } = useI18n();
 
@@ -32,6 +36,8 @@ export default function PlayerPage() {
   const [streamingText, setStreamingText] = useState("");
   const [visualMode, setVisualMode] = useState<ModeKey>("Glob");
   const [showExtras, setShowExtras] = useState(false);
+
+  const [showSearch, setShowSearch] = useState(false);
 
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [playlistName, setPlaylistName] = useState("");
@@ -195,12 +201,33 @@ export default function PlayerPage() {
             <span className="progress-time right">{formatTime(durationMs)}</span>
           </div>
 
+          {lastError && (
+            <div className="error-banner" onClick={clearError}>
+              <span className="error-banner-text">{lastError}</span>
+              <span className="error-banner-dismiss">✕</span>
+            </div>
+          )}
+
           <div className="controls-row">
+            <button
+              className={`ctrl-btn ${shuffle ? "active-mode" : ""}`}
+              onClick={toggleShuffle}
+              title={`Shuffle: ${shuffle ? "On" : "Off"}`}
+            >
+              🔀
+            </button>
             <button className="ctrl-btn" onClick={() => usePlayerStore.getState().previous()}>⏮</button>
             <button className="ctrl-btn play-btn" onClick={() => usePlayerStore.getState().togglePlay()}>
               {isPlaying ? "⏸" : "▶"}
             </button>
             <button className="ctrl-btn" onClick={() => usePlayerStore.getState().next()}>⏭</button>
+            <button
+              className={`ctrl-btn ${repeatMode !== "off" ? "active-mode" : ""}`}
+              onClick={cycleRepeat}
+              title={`Repeat: ${repeatMode}`}
+            >
+              {repeatMode === "one" ? "🔂" : "🔁"}
+            </button>
           </div>
 
           <KaraokeLyrics songId={nowPlaying?.songId} currentTimeMs={progressMs} />
@@ -214,6 +241,20 @@ export default function PlayerPage() {
         <ChatArea messages={chatMessages} streamingText={streamingText} />
         <IntentInput onResponse={handleAiResponse} onUserMessage={handleUserMessage} />
       </div>
+
+      {/* Search Panel */}
+      <div className="search-toggle">
+        <button className="extras-btn" onClick={() => setShowSearch(!showSearch)}>
+          {showSearch ? "▲ Hide Search" : "🔍 Search Songs"}
+        </button>
+      </div>
+
+      {showSearch && (
+        <SearchPanel onSelectSong={(item) => {
+          usePlayerStore.getState().playItem(item);
+          setShowSearch(false);
+        }} />
+      )}
 
       {/* Extras Toggle: Theme + Queue */}
       <div className="extras-toggle">

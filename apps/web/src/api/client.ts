@@ -133,4 +133,8 @@ export const api = {
   getLyric: (songId: string) => request<{ lrc: string; tlyric?: string; yrc?: string }>(`/api/lyric?id=${encodeURIComponent(songId)}`),
   reportPlay: (body: { songId?: string; title?: string; artist?: string; coverUrl?: string; durationMs?: number; scene?: string }) =>
     fetch("/api/plays/report", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }),
+  searchSongs: (q: string, limit = 10) =>
+    request<{ results: Array<{ id: string; title: string; artist: string; album: string; coverUrl: string; durationMs: number }> }>(
+      `/api/search?q=${encodeURIComponent(q)}&limit=${limit}`
+    ),
 };

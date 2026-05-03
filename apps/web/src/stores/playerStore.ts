@@ -10,6 +10,8 @@ export interface DjMessage {
   ts: number;
 }
 
+export type RepeatMode = "off" | "all" | "one";
+
 interface PlayerState {
   nowPlaying: QueueItem | null;
   queue: QueueItem[];
@@ -20,6 +22,22 @@ interface PlayerState {
   durationMs: number;
   scene: string | null;
   djStatus: "idle" | "thinking" | "speaking" | "error";
+
+  // Volume
+  volume: number;
+  isMuted: boolean;
+  setVolume: (v: number) => void;
+  toggleMute: () => void;
+
+  // Shuffle / Repeat
+  repeatMode: RepeatMode;
+  shuffle: boolean;
+  toggleShuffle: () => void;
+  cycleRepeat: () => void;
+
+  // Error
+  lastError: string | null;
+  clearError: () => void;
 
   fetchNow: () => Promise<void>;
   togglePlay: () => void;
@@ -51,7 +69,9 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
   audioPlayer.onError(() => {
     consecutiveErrors++;
     const { nowPlaying } = get();
+    const errMsg = `Playback failed: ${nowPlaying?.title ?? "Unknown"}`;
     console.warn(`[player] Audio error for: ${nowPlaying?.title} (consecutive: ${consecutiveErrors})`);
+    set({ lastError: errMsg });
     if (consecutiveErrors > 3) {
       console.error("[player] Too many consecutive errors, stopping auto-skip.");
       consecutiveErrors = 0;
@@ -85,6 +105,43 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     scene: null,
     djStatus: "idle",
 
+    // Volume
+    volume: 1,
+    isMuted: false,
+    setVolume: (v: number) => {
+      const clamped = Math.max(0, Math.min(1, v));
+      audioPlayer.setVolume(clamped);
+      set({ volume: clamped, isMuted: clamped === 0 });
+    },
+    toggleMute: () => {
+      const { isMuted, volume } = get();
+      if (isMuted) {
+        audioPlayer.setVolume(volume || 1);
+        set({ isMuted: false });
+      } else {
+        audioPlayer.setVolume(0);
+        set({ isMuted: true });
+      }
+    },
+
+    // Shuffle / Repeat
+    repeatMode: "off",
+    shuffle: false,
+    toggleShuffle: () => {
+      set((s) => ({ shuffle: !s.shuffle }));
+    },
+    cycleRepeat: () => {
+      set((s) => {
+        const modes: RepeatMode[] = ["off", "all", "one"];
+        const idx = modes.indexOf(s.repeatMode);
+        return { repeatMode: modes[(idx + 1) % 3] };
+      });
+    },
+
+    // Error
+    lastError: null,
+    clearError: () => set({ lastError: null }),
+
     fetchNow: async () => {
       try {
         // Don't overwrite state if user is already playing
@@ -116,7 +173,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
           }
         }, 500);
       }
-      set({ nowPlaying: item, progressMs: 0 });
+      set({ nowPlaying: item, progressMs: 0, lastError: null });
       if (item.type === "song" && item.songId) {
         api.reportPlay({
           songId: item.songId,
@@ -139,20 +196,61 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     },
 
     next: () => {
-      const { queue, nowPlaying } = get();
+      const { queue, nowPlaying, repeatMode, shuffle } = get();
+      if (queue.length === 0) return;
+
+      if (repeatMode === "one" && nowPlaying) {
+        get().playItem(nowPlaying);
+        return;
+      }
+
       const idx = queue.findIndex((item) => item.id === nowPlaying?.id);
-      const nextItem = queue[idx + 1] ?? queue[0] ?? null;
-      if (nextItem) {
-        get().playItem(nextItem);
+
+      if (shuffle) {
+        if (queue.length === 1) {
+          get().playItem(queue[0]);
+          return;
+        }
+        let randIdx = Math.floor(Math.random() * queue.length);
+        while (randIdx === idx && queue.length > 1) {
+          randIdx = Math.floor(Math.random() * queue.length);
+        }
+        get().playItem(queue[randIdx]);
+        return;
+      }
+
+      const nextIdx = idx + 1;
+      if (nextIdx < queue.length) {
+        get().playItem(queue[nextIdx]);
+      } else if (repeatMode === "all") {
+        get().playItem(queue[0]);
       }
     },
 
     previous: () => {
-      const { queue, nowPlaying } = get();
+      const { queue, nowPlaying, shuffle } = get();
+      if (queue.length === 0) return;
+
       const idx = queue.findIndex((item) => item.id === nowPlaying?.id);
-      const prevItem = queue[idx - 1] ?? queue[queue.length - 1] ?? null;
-      if (prevItem) {
-        get().playItem(prevItem);
+
+      if (shuffle) {
+        if (queue.length === 1) {
+          get().playItem(queue[0]);
+          return;
+        }
+        let randIdx = Math.floor(Math.random() * queue.length);
+        while (randIdx === idx && queue.length > 1) {
+          randIdx = Math.floor(Math.random() * queue.length);
+        }
+        get().playItem(queue[randIdx]);
+        return;
+      }
+
+      const prevIdx = idx - 1;
+      if (prevIdx >= 0) {
+        get().playItem(queue[prevIdx]);
+      } else {
+        get().playItem(queue[queue.length - 1]);
       }
     },
 

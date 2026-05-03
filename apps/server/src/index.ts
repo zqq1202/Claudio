@@ -18,6 +18,7 @@ import { playlistRoutes } from "./routes/playlist.js";
 import { ncmPlaylistRoutes } from "./routes/ncm-playlists.js";
 import { lyricRoutes } from "./routes/lyric.js";
 import { coverRoutes } from "./routes/cover.js";
+import { searchRoutes } from "./routes/search.js";
 import { MockNcmService, NeteaseNcmService } from "./services/ncm.service.js";
 import { MockClaudeService, ClaudeApiService } from "./services/claude.service.js";
 import { readFileSync } from "node:fs";
@@ -107,6 +108,7 @@ await app.register(playlistRoutes);
 await app.register(ncmPlaylistRoutes);
 await app.register(lyricRoutes);
 await app.register(coverRoutes);
+await app.register(searchRoutes);
 
 async function start() {
   try {
