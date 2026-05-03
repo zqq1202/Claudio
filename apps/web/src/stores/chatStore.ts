@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { QueueItem } from "../api/client";
 import { api } from "../api/client";
+import { useToastStore } from "./toastStore";
 
 export interface ChatMessage {
     id: string;
@@ -137,6 +138,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
                     isStreaming: false,
                     error: msg,
                 });
+                useToastStore.getState().addToast("AI 对话出错", "error");
             },
         });
 

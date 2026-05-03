@@ -1,5 +1,9 @@
-import { Routes, Route, Link, useLocation } from "react-router-dom";
+import { Routes, Route, Link, useLocation, useNavigate } from "react-router-dom";
 import { useI18n } from "./i18n/context";
+import { usePlayerStore } from "./stores/playerStore";
+import { useKeyboard } from "./hooks/useKeyboard";
+import ToastContainer, { ShortcutHintBar } from "./components/Toast";
+import MiniPlayer from "./components/MiniPlayer";
 import PlayerPage from "./pages/PlayerPage";
 import SettingsPage from "./pages/SettingsPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -7,7 +11,13 @@ import PlaylistPage from "./pages/PlaylistPage";
 
 export default function App() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { t, lang, toggleLang } = useI18n();
+  const nowPlaying = usePlayerStore((s) => s.nowPlaying);
+
+  useKeyboard();
+
+  const showMiniPlayer = !!nowPlaying && location.pathname !== "/";
 
   const navItems = [
     { path: "/", label: t("navHome") },
@@ -106,7 +116,7 @@ export default function App() {
       </nav>
 
       {/* Main Content */}
-      <main className="main-content">
+      <main className={`main-content ${showMiniPlayer ? "has-mini-player" : ""}`}>
         <Routes>
           <Route path="/" element={<PlayerPage />} />
           <Route path="/playlists" element={<PlaylistPage />} />
@@ -114,6 +124,17 @@ export default function App() {
           <Route path="/settings" element={<SettingsPage />} />
         </Routes>
       </main>
+
+      {/* MiniPlayer — fixed bottom bar when not on home page */}
+      {showMiniPlayer && (
+        <MiniPlayer onExpand={() => navigate("/")} />
+      )}
+
+      {/* Toast notifications */}
+      <ToastContainer />
+
+      {/* Keyboard shortcut hint */}
+      <ShortcutHintBar />
     </div>
   );
 }

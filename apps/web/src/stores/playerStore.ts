@@ -3,6 +3,7 @@ import type { QueueItem } from "../api/client";
 import { api } from "../api/client";
 import { audioPlayer } from "../audio/AudioPlayer";
 import { wsClient } from "../api/ws";
+import { useToastStore } from "./toastStore";
 
 export interface DjMessage {
   id: string;
@@ -72,6 +73,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     const errMsg = `Playback failed: ${nowPlaying?.title ?? "Unknown"}`;
     console.warn(`[player] Audio error for: ${nowPlaying?.title} (consecutive: ${consecutiveErrors})`);
     set({ lastError: errMsg });
+    useToastStore.getState().addToast("播放失败，已跳过", "error");
     if (consecutiveErrors > 3) {
       console.error("[player] Too many consecutive errors, stopping auto-skip.");
       consecutiveErrors = 0;

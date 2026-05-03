@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { usePlayerStore } from "../stores/playerStore";
+import { useToastStore } from "../stores/toastStore";
 import { useI18n } from "../i18n/context";
 import AudioSpectrum from "../components/AudioSpectrum";
 import KaraokeLyrics from "../components/KaraokeLyrics";
@@ -9,6 +10,7 @@ import ChatArea from "../components/ChatArea";
 import QueueList from "../components/QueueList";
 import AudioVisualizer from "../components/AudioVisualizer";
 import SearchPanel from "../components/SearchPanel";
+import { PlayerSkeleton } from "../components/Skeleton";
 import { api } from "../api/client";
 import { wsClient } from "../api/ws";
 
@@ -34,6 +36,7 @@ export default function PlayerPage() {
 
   const [visualMode, setVisualMode] = useState<ModeKey>("Glob");
   const [showExtras, setShowExtras] = useState(false);
+  const [initialLoaded, setInitialLoaded] = useState(false);
 
   const [showSearch, setShowSearch] = useState(false);
 
@@ -47,7 +50,7 @@ export default function PlayerPage() {
   const progressRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetchNow();
+    fetchNow().finally(() => setInitialLoaded(true));
     wsClient.connect();
     return () => wsClient.disconnect();
   }, [fetchNow]);
@@ -109,8 +112,10 @@ export default function PlayerPage() {
       setShowSaveDialog(false);
       setPlaylistName("");
       setPlaylistDesc("");
+      useToastStore.getState().addToast("歌单已保存", "success");
     } catch (err) {
       console.error("Failed to save playlist:", err);
+      useToastStore.getState().addToast("保存失败", "error");
     } finally {
       setSaving(false);
     }
