@@ -2070,6 +2070,41 @@ body::after {
   to { transform: rotate(360deg); }
 }
 
+/* — Tabs — */
+.pl-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  padding: 4px;
+  background: var(--bg-glass);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+}
+
+.pl-tab {
+  flex: 1;
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--t-fast);
+  font-family: var(--font-body);
+}
+
+.pl-tab:hover {
+  color: var(--text-secondary);
+}
+
+.pl-tab.active {
+  background: var(--mint-subtle);
+  color: var(--mint);
+  box-shadow: 0 0 8px var(--mint-glow);
+}
+
 /* — Header — */
 .pl-header {
   display: flex;

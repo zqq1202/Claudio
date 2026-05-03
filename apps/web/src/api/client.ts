@@ -263,4 +263,11 @@ export const api = {
         request<{ ok: boolean }>("/api/favorites", { method: "POST", body: JSON.stringify(body) }),
     removeFavorite: (songId: string) =>
         request<{ ok: boolean }>(`/api/favorites/${encodeURIComponent(songId)}`, { method: "DELETE" }),
+    getQueue: () =>
+        request<{ items: QueueItem[] }>("/api/queue"),
+    saveQueue: (items: QueueItem[]) =>
+        request<{ ok: boolean }>("/api/queue", {
+            method: "PUT",
+            body: JSON.stringify({ items }),
+        }),
 };

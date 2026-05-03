@@ -75,6 +75,8 @@ export const translations = {
     // Playlists
     navPlaylists: "Playlists",
     playlistsTitle: "Playlists",
+    localPlaylists: "My Playlists",
+    ncmPlaylists: "Netease Playlists",
     emptyPlaylists: "No playlists yet",
     playlistSongs: "songs",
     playAll: "Play All",
@@ -169,6 +171,8 @@ export const translations = {
     // Playlists
     navPlaylists: "歌单",
     playlistsTitle: "歌单",
+    localPlaylists: "我的歌单",
+    ncmPlaylists: "网易云歌单",
     emptyPlaylists: "还没有歌单",
     playlistSongs: "首歌",
     playAll: "播放全部",

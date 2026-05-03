@@ -199,6 +199,32 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
         if (data.nowPlaying?.audioUrl) {
           audioPlayer.load(data.nowPlaying.audioUrl);
         }
+
+        // If queue is empty, auto-load from default NCM playlist
+        if (!data.nowPlaying && data.queue.length === 0) {
+          try {
+            const defaultPlaylistId = "8624020658";
+            const plData = await api.getNcmPlaylistDetail(defaultPlaylistId);
+            if (plData.tracks.length > 0) {
+              const items: QueueItem[] = plData.tracks.map((t, i) => ({
+                id: `default_${t.id}_${i}`,
+                type: "song" as const,
+                songId: t.id,
+                title: t.title,
+                artist: t.artist,
+                coverUrl: t.coverUrl,
+                audioUrl: `/api/audio?id=${encodeURIComponent(t.id)}&title=${encodeURIComponent(t.title)}&artist=${encodeURIComponent(t.artist)}`,
+                status: (i === 0 ? "playing" : "pending") as QueueItem["status"],
+              }));
+              set({ queue: items, nowPlaying: items[0] });
+              if (items[0].audioUrl) {
+                audioPlayer.load(items[0].audioUrl);
+              }
+            }
+          } catch (err) {
+            console.warn("[player] Failed to load default playlist:", err);
+          }
+        }
       } catch (err) {
         console.error("Failed to fetch /api/now:", err);
       }
