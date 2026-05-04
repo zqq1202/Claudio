@@ -58,11 +58,12 @@
   --font-mono: "SF Mono", "Fira Code", "JetBrains Mono", monospace;
   --font-pixel: "Inter", sans-serif;
 
-  /* Dynamic color defaults */
+  /* Dynamic color vars (overridden by extractColors when song plays) */
   --color-primary: #5ee8c5;
   --color-secondary: #4a6cf7;
   --color-accent: #a855f7;
   --blob-secondary: #a855f7;
+
 }
 
 /* ===== Body ===== */

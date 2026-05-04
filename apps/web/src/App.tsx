@@ -35,54 +35,6 @@ export default function App() {
 
   return (
     <div className="app">
-      {/* Fluid gradient background blobs */}
-      <div
-        style={{
-          position: "fixed",
-          inset: 0,
-          overflow: "hidden",
-          pointerEvents: "none",
-          zIndex: 0,
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            width: "70vmin",
-            height: "70vmin",
-            left: "50%",
-            top: "50%",
-            marginLeft: "-35vmin",
-            marginTop: "-35vmin",
-            borderRadius: "50%",
-            background: `radial-gradient(circle at 40% 40%,
-              rgba(94,232,197,0.06) 0%,
-              rgba(60,180,160,0.03) 40%,
-              transparent 70%)`,
-            filter: "blur(100px)",
-            animation: "fluidMove1 26s cubic-bezier(.45,.05,.55,.95) infinite",
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            width: "55vmin",
-            height: "55vmin",
-            left: "50%",
-            top: "50%",
-            marginLeft: "-27vmin",
-            marginTop: "-27vmin",
-            borderRadius: "50%",
-            background: `radial-gradient(circle at 50% 50%,
-              rgba(100,100,200,0.04) 0%,
-              rgba(80,80,180,0.02) 45%,
-              transparent 70%)`,
-            filter: "blur(80px)",
-            animation: "fluidMove2 34s cubic-bezier(.45,.05,.55,.95) infinite",
-          }}
-        />
-      </div>
-
       {/* Noise overlay */}
       <div
         style={{

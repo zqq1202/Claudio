@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { resetColors } from "../utils/colorExtractor";
 
 type Theme = "dark" | "light";
 
@@ -15,6 +16,7 @@ export function useTheme() {
   }, [theme]);
 
   const toggleTheme = useCallback(() => {
+    resetColors(); // clear dynamic color overrides so theme CSS takes effect
     document.documentElement.classList.add("theme-transitioning");
     setTheme((prev) => (prev === "dark" ? "light" : "dark"));
     setTimeout(() => {

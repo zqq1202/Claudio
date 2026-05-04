@@ -110,10 +110,11 @@ export function extractColors(imageUrl: string): Promise<ColorResult | null> {
         (c) => `rgb(${c[0]},${c[1]},${c[2]})`
       );
 
-      document.documentElement.style.setProperty("--color-primary", primary);
-      document.documentElement.style.setProperty("--color-secondary", secondary);
-      document.documentElement.style.setProperty("--color-accent", accent);
-      document.documentElement.style.setProperty(
+      const root = document.documentElement;
+      root.style.setProperty("--color-primary", primary);
+      root.style.setProperty("--color-secondary", secondary);
+      root.style.setProperty("--color-accent", accent);
+      root.style.setProperty(
         "--blob-secondary",
         complementaryColor(primary)
       );
@@ -123,4 +124,13 @@ export function extractColors(imageUrl: string): Promise<ColorResult | null> {
     img.onerror = () => resolve(null);
     img.src = imageUrl;
   });
+}
+
+/** Reset dynamic color overrides so theme CSS variables take effect */
+export function resetColors(): void {
+  const root = document.documentElement;
+  root.style.removeProperty("--color-primary");
+  root.style.removeProperty("--color-secondary");
+  root.style.removeProperty("--color-accent");
+  root.style.removeProperty("--blob-secondary");
 }
