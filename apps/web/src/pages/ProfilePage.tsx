@@ -1,92 +1,18 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { api, type FullProfileResponse, type ProfilePreferences } from "../api/client";
 import { useI18n } from "../i18n/context";
-import type { TranslationKey } from "../i18n/translations";
 
-function BarChart({ data }: { data: Record<string, number> }) {
-  const entries = Object.entries(data);
-  if (entries.length === 0) return null;
-  const max = Math.max(...Object.values(data), 1);
-  return (
-    <div>
-      {entries.map(([key, val]) => (
-        <div key={key} className="bar-row">
-          <span className="bar-label">{key}</span>
-          <div className="bar-track">
-            <div className="bar-fill" style={{ width: `${(val / max) * 100}%` }} />
-          </div>
-          <span className="bar-value">{val}%</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function TagEditor({
-  label,
-  tags,
-  onChange,
-  placeholder,
-}: {
-  label: string;
-  tags: string[];
-  onChange: (tags: string[]) => void;
-  placeholder: string;
-}) {
-  const [input, setInput] = useState("");
-
-  const addTag = () => {
-    const val = input.trim();
-    if (val && !tags.includes(val)) {
-      onChange([...tags, val]);
-      setInput("");
-    }
-  };
-
-  const removeTag = (tag: string) => {
-    onChange(tags.filter((t) => t !== tag));
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      addTag();
-    }
-  };
-
-  return (
-    <div className="pref-section">
-      <div className="pref-section-label">{label}</div>
-      <div className="tag-pills">
-        {tags.map((tag) => (
-          <span key={tag} className="tag-pill tag-pill-removable" onClick={() => removeTag(tag)}>
-            {tag}
-            <span className="tag-pill-x">&times;</span>
-          </span>
-        ))}
-        <div className="tag-input-wrap">
-          <input
-            className="tag-input"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={placeholder}
-          />
-          {input.trim() && (
-            <button className="tag-add-btn" onClick={addTag}>+</button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
+/* ── helpers ── */
+const toText = (arr: string[]) => arr.join(", ");
+const fromText = (s: string) =>
+  s.split(/[,，、;/\n]\s*/).map((v) => v.trim()).filter(Boolean);
 
 export default function ProfilePage() {
   const [data, setData] = useState<FullProfileResponse | null>(null);
   const [prefs, setPrefs] = useState<ProfilePreferences | null>(null);
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
   const [error, setError] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
   const { t } = useI18n();
 
   useEffect(() => {
@@ -99,19 +25,26 @@ export default function ProfilePage() {
     });
   }, []);
 
-  const handleSave = async () => {
+  // Auto-save with debounce
+  const autoSave = useCallback(async (newPrefs: ProfilePreferences) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      setSaving(true);
+      try {
+        await api.updateProfilePreferences(newPrefs);
+      } catch (err) {
+        console.error("Auto-save failed:", err);
+      } finally {
+        setSaving(false);
+      }
+    }, 800);
+  }, []);
+
+  const updatePrefs = (patch: Partial<ProfilePreferences>) => {
     if (!prefs) return;
-    setSaving(true);
-    setSaved(false);
-    try {
-      await api.updateProfilePreferences(prefs);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
-    } catch (err) {
-      console.error("Failed to save preferences:", err);
-    } finally {
-      setSaving(false);
-    }
+    const newPrefs = { ...prefs, ...patch };
+    setPrefs(newPrefs);
+    autoSave(newPrefs);
   };
 
   if (!data || !prefs) {
@@ -119,7 +52,7 @@ export default function ProfilePage() {
       <div className="main-inner">
         <div className="profile-card">
           <div className="profile-header">
-            <div className="profile-avatar"><span style={{ fontSize: 28 }}>&#127925;</span></div>
+            <div className="profile-avatar"><span style={{ fontSize: 28 }}>🎵</span></div>
             <div className="profile-name-block">
               <div className="profile-name">Claudio</div>
             </div>
@@ -148,20 +81,21 @@ export default function ProfilePage() {
         {/* Header */}
         <div className="profile-header">
           <div className="profile-avatar">
-            <span style={{ fontSize: 28 }}>&#127925;</span>
+            <span style={{ fontSize: 28 }}>🎵</span>
           </div>
           <div className="profile-name-block">
             <div className="profile-name">Claudio</div>
             <div className="profile-status">
               <span className="dj-status-dot" />
               {t("iSpinOnBoot")}
+              {saving && <span style={{ marginLeft: 8, fontSize: 11, opacity: 0.5 }}>· saving…</span>}
             </div>
           </div>
         </div>
 
         <div className="profile-desc">{t("profileSubtitle")}</div>
 
-        {/* ===== Section 1: Music Profile (read-only) ===== */}
+        {/* ===== Music Profile Stats ===== */}
         <div className="profile-section">
           <div className="profile-section-title">{t("musicProfile")}</div>
 
@@ -180,9 +114,7 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {!hasData && (
-            <div className="empty-state">{t("emptyProfile")}</div>
-          )}
+          {!hasData && <div className="empty-state">{t("emptyProfile")}</div>}
 
           {/* Top Artists */}
           {stats.topArtists.length > 0 && (
@@ -201,11 +133,19 @@ export default function ProfilePage() {
             </div>
           )}
 
-          {/* Mood Preference */}
+          {/* Mood Distribution */}
           {Object.keys(stats.moodPreference).length > 0 && (
             <div className="profile-subsection">
               <div className="profile-subsection-title">{t("mood")}</div>
-              <BarChart data={stats.moodPreference} />
+              {Object.entries(stats.moodPreference).map(([mood, pct]) => (
+                <div key={mood} className="bar-row">
+                  <span className="bar-label">{mood}</span>
+                  <div className="bar-track">
+                    <div className="bar-fill" style={{ width: `${pct}%` }} />
+                  </div>
+                  <span className="bar-value">{pct}%</span>
+                </div>
+              ))}
             </div>
           )}
 
@@ -222,51 +162,70 @@ export default function ProfilePage() {
           )}
         </div>
 
-        {/* ===== Section 2: Editable Preferences ===== */}
+        {/* ===== Editable Preferences (auto-save) ===== */}
         <div className="profile-section">
-          <div className="profile-section-title">{t("myPreferences")}</div>
-
-          <TagEditor
-            label={t("favoriteGenres")}
-            tags={prefs.favoriteGenres}
-            onChange={(v) => setPrefs({ ...prefs, favoriteGenres: v })}
-            placeholder={t("addTag")}
-          />
-          <TagEditor
-            label={t("dislikedGenres")}
-            tags={prefs.dislikedGenres}
-            onChange={(v) => setPrefs({ ...prefs, dislikedGenres: v })}
-            placeholder={t("addTag")}
-          />
-          <TagEditor
-            label={t("preferredScenes")}
-            tags={prefs.preferredScenes}
-            onChange={(v) => setPrefs({ ...prefs, preferredScenes: v })}
-            placeholder={t("addTag")}
-          />
-          <TagEditor
-            label={t("preferredMoods")}
-            tags={prefs.preferredMoods}
-            onChange={(v) => setPrefs({ ...prefs, preferredMoods: v })}
-            placeholder={t("addTag")}
-          />
+          <div className="profile-section-title">
+            {t("myPreferences")}
+            {saving && <span className="pref-saving-hint">saving…</span>}
+          </div>
 
           <div className="pref-section">
-            <div className="pref-section-label">{t("userNote")}</div>
+            <div className="pref-section-label">🎵 {t("favoriteGenres")}</div>
             <textarea
               className="pref-textarea"
-              value={prefs.userNote}
-              onChange={(e) => setPrefs({ ...prefs, userNote: e.target.value })}
-              rows={3}
+              value={toText(prefs.favoriteGenres)}
+              onChange={(e) => updatePrefs({ favoriteGenres: fromText(e.target.value) })}
+              placeholder="Pop, Jazz, R&B, Hip-Hop…"
+              rows={1}
             />
           </div>
 
-          <button className="save-btn" onClick={handleSave} disabled={saving}>
-            {saving ? t("saving") : saved ? t("preferencesSaved") : t("savePreferences")}
-          </button>
+          <div className="pref-section">
+            <div className="pref-section-label">🚫 {t("dislikedGenres")}</div>
+            <textarea
+              className="pref-textarea"
+              value={toText(prefs.dislikedGenres)}
+              onChange={(e) => updatePrefs({ dislikedGenres: fromText(e.target.value) })}
+              placeholder="Heavy Metal, Hardstyle…"
+              rows={1}
+            />
+          </div>
+
+          <div className="pref-section">
+            <div className="pref-section-label">🎧 {t("preferredScenes")}</div>
+            <textarea
+              className="pref-textarea"
+              value={toText(prefs.preferredScenes)}
+              onChange={(e) => updatePrefs({ preferredScenes: fromText(e.target.value) })}
+              placeholder="学习, 睡前, 开车, 运动…"
+              rows={1}
+            />
+          </div>
+
+          <div className="pref-section">
+            <div className="pref-section-label">💆 {t("preferredMoods")}</div>
+            <textarea
+              className="pref-textarea"
+              value={toText(prefs.preferredMoods)}
+              onChange={(e) => updatePrefs({ preferredMoods: fromText(e.target.value) })}
+              placeholder="放松, 治愈, 活力, 忧郁…"
+              rows={1}
+            />
+          </div>
+
+          <div className="pref-section">
+            <div className="pref-section-label">📝 {t("userNote")}</div>
+            <textarea
+              className="pref-textarea pref-textarea-note"
+              value={prefs.userNote}
+              onChange={(e) => updatePrefs({ userNote: e.target.value })}
+              placeholder="其他想让小音知道的偏好…"
+              rows={2}
+            />
+          </div>
         </div>
 
-        {/* ===== Section 3: Daily Recommendations History ===== */}
+        {/* ===== Daily Recommendation History ===== */}
         <div className="profile-section">
           <div className="profile-section-title">{t("dailyHistory")}</div>
           {dailyRecommendations.length === 0 ? (
