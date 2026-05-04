@@ -248,15 +248,16 @@ body::after {
   position: relative;
 }
 
-/* ===== Sidebars (absolute overlay on card sides) ===== */
+/* ===== Sidebars (fixed overlay next to card) ===== */
 .sidebar-left,
 .sidebar-right {
-  position: absolute;
-  top: 0;
-  bottom: 0;
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%) translateX(0);
   display: flex;
   flex-direction: column;
   width: 300px;
+  max-height: 70vh;
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
@@ -268,19 +269,19 @@ body::after {
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  z-index: 20;
+  z-index: 100;
   box-shadow: 0 8px 32px rgba(0,0,0,0.3);
   overflow: hidden;
 }
 
 .sidebar-left {
-  right: calc(100% + 8px);
-  transform: translateX(10px);
+  left: calc(50% - 240px - 300px - 12px);
+  transform: translateY(-50%) translateX(-10px);
 }
 
 .sidebar-right {
-  left: calc(100% + 8px);
-  transform: translateX(-10px);
+  left: calc(50% + 240px + 12px);
+  transform: translateY(-50%) translateX(10px);
 }
 
 .sidebar-left.open,
@@ -288,7 +289,7 @@ body::after {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
-  transform: translateX(0);
+  transform: translateY(-50%) translateX(0);
 }
 
 .sidebar-header {
@@ -328,7 +329,7 @@ body::after {
 
 /* ===== Sidebar Float Buttons (always visible on card edges) ===== */
 .sidebar-float-btn {
-  position: absolute;
+  position: fixed;
   top: 50%;
   transform: translateY(-50%);
   width: 28px;
@@ -343,7 +344,7 @@ body::after {
   align-items: center;
   justify-content: center;
   font-size: 13px;
-  z-index: 15;
+  z-index: 99;
   transition: all 0.2s;
   opacity: 0.7;
 }
@@ -356,23 +357,23 @@ body::after {
 }
 
 .sidebar-float-btn.left {
-  left: -28px;
+  left: calc(50% - 240px - 28px);
   border-radius: 8px 0 0 8px;
   border-right: none;
 }
 
 .sidebar-float-btn.right {
-  right: -28px;
+  left: calc(50% + 240px);
   border-radius: 0 8px 8px 0;
   border-left: none;
 }
 
 .sidebar-float-btn.left:hover {
-  left: -32px;
+  left: calc(50% - 240px - 32px);
 }
 
 .sidebar-float-btn.right:hover {
-  right: -32px;
+  left: calc(50% + 240px);
 }
 
 /* ===== Theme Section ===== */
@@ -4205,21 +4206,27 @@ button {
     height: 260px;
   }
 
-  /* Sidebars: wider on mobile, positioned inside card */
+  /* Sidebars: full width on mobile */
   .sidebar-left,
   .sidebar-right {
     width: 85vw;
+    max-height: 60vh;
     border-radius: var(--radius-md);
   }
 
   .sidebar-left {
-    right: auto;
-    left: 0;
+    left: 50%;
+    transform: translateY(-50%) translateX(-50%);
   }
 
   .sidebar-right {
-    left: auto;
-    right: 0;
+    left: 50%;
+    transform: translateY(-50%) translateX(-50%);
+  }
+
+  .sidebar-left.open,
+  .sidebar-right.open {
+    transform: translateY(-50%) translateX(-50%);
   }
 
   .sidebar-float-btn {
