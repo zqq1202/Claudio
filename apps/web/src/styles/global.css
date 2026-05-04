@@ -786,19 +786,6 @@ body::after {
   margin-bottom: 20px;
 }
 
-.cover-art-wrap {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 16px;
-}
-.cover-art-img {
-  width: 180px;
-  height: 180px;
-  border-radius: 12px;
-  object-fit: cover;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
-  background: var(--bg-glass);
-}
 
 /* Progress */
 .progress-row {
@@ -4038,38 +4025,126 @@ button {
   height: 100%;
 }
 
-/* ===== Cover 3D Flip ===== */
-.cover-flip-container {
-  perspective: 1000px;
-  width: 100%;
+/* ===== Player Content Layout (Cover + Lyrics Side by Side) ===== */
+.player-content {
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
 }
 
-.cover-flipper {
-  transform-style: preserve-3d;
-  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+.cover-section {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.cover-disc {
   position: relative;
-  cursor: pointer;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 6px rgba(255, 255, 255, 0.06),
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 60px rgba(94, 232, 197, 0.1);
 }
 
-.cover-flipper.flipped {
-  transform: rotateY(180deg);
-}
-
-.cover-front,
-.cover-back {
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-}
-
-.cover-back {
-  transform: rotateY(180deg);
+.cover-disc-glow {
   position: absolute;
-  inset: 0;
-  overflow-y: auto;
+  inset: -8px;
+  border-radius: 50%;
+  z-index: -1;
+  opacity: 0.3;
+  box-shadow: 0 0 40px 10px var(--color-primary, #5ee8c5);
+  transition: opacity 0.3s;
 }
 
-.cover-back::-webkit-scrollbar {
-  width: 0;
+.cover-disc-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+
+.cover-disc.spinning {
+  animation: discSpin 20s linear infinite;
+}
+
+.cover-disc.paused {
+  animation: discSpin 20s linear infinite;
+  animation-play-state: paused;
+}
+
+@keyframes discSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.lyrics-section {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  height: 320px;
+}
+
+.lyrics-header {
+  margin-bottom: 16px;
+  flex-shrink: 0;
+}
+
+.lyrics-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.lyrics-title-row .song-title {
+  margin-bottom: 0;
+}
+
+.lyrics-body {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  padding-right: 4px;
+}
+
+.lyrics-body::-webkit-scrollbar {
+  width: 4px;
+}
+
+.lyrics-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.lyrics-body::-webkit-scrollbar-thumb {
+  background: var(--border-light);
+  border-radius: 2px;
+}
+
+/* ===== Responsive: Mobile ===== */
+@media (max-width: 768px) {
+  .player-content {
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .cover-disc {
+    width: 220px;
+    height: 220px;
+  }
+
+  .lyrics-section {
+    width: 100%;
+    height: 260px;
+  }
 }
 
 /* ===== Slide Up Panel ===== */

@@ -4,9 +4,10 @@ import { useI18n } from "../i18n/context";
 
 interface Props {
   barCount?: number;
+  bass?: number;
 }
 
-export default function WaveformBar({ barCount = 60 }: Props) {
+export default function WaveformBar({ barCount = 60, bass = 0 }: Props) {
   const { isPlaying, progressMs, durationMs, togglePlay } = usePlayerStore();
   const { t } = useI18n();
 
@@ -43,7 +44,7 @@ export default function WaveformBar({ barCount = 60 }: Props) {
             <div
               key={i}
               className={`waveform-bar ${isPlayed ? "played" : ""} ${isActive ? "active" : ""}`}
-              style={{ height: `${height}px` }}
+              style={{ height: `${height * (1 + bass * 0.8)}px` }}
             />
           );
         })}

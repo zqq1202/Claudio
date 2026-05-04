@@ -137,8 +137,11 @@ class AudioPlayerManager {
       this.sourceNode.connect(this.gainNode);
       this.gainNode.connect(this.audioCtx.destination);
     } catch {
-      // Already connected or unsupported
+      this.audioCtx = null;
+      this.sourceNode = null;
+      this.gainNode = null;
     }
+
   }
 
   /** Duck music volume (for DJ voice) */
@@ -173,15 +176,15 @@ class AudioPlayerManager {
   }
 
   /** Expose the shared AudioContext for SpectrumBars etc. */
-  getAudioContext(): AudioContext {
+  getAudioContext(): AudioContext | null {
     this.ensureGainNode();
-    return this.audioCtx!;
+    return this.audioCtx;
   }
 
   /** Expose the shared source node so other components can create analysers from it */
-  getSourceNode(): MediaElementAudioSourceNode {
+  getSourceNode(): MediaElementAudioSourceNode | null {
     this.ensureGainNode();
-    return this.sourceNode!;
+    return this.sourceNode;
   }
 
   get currentTimeMs() {

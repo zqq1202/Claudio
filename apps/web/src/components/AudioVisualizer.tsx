@@ -7,8 +7,8 @@ interface Props {
   onFrequencyData?: (bass: number, mid: number) => void;
 }
 
-const ATTACK = 0.4;
-const RELEASE = 0.15;
+const ATTACK = 0.6;
+const RELEASE = 0.3;
 
 function toRgba(color: string, alpha: number): string {
   if (color.startsWith("rgb(")) {
@@ -27,28 +27,28 @@ function toRgba(color: string, alpha: number): string {
 export default function AudioVisualizer({ mode, onFrequencyData }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animFrameRef = useRef<number>(0);
-  const audioCtxRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const freqDataRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
   const bassRef = useRef(0);
   const midRef = useRef(0);
-  const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
+  const onFreqRef = useRef(onFrequencyData);
+  onFreqRef.current = onFrequencyData;
 
   const setupAudio = useCallback(() => {
-    if (audioCtxRef.current) return;
-    const audioEl = audioPlayer.audioElement;
-    const ACtor = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    const audioCtx = new ACtor();
-    const analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 256;
-    analyser.smoothingTimeConstant = 0.8;
-    const source = audioCtx.createMediaElementSource(audioEl);
-    source.connect(analyser);
-    analyser.connect(audioCtx.destination);
-    audioCtxRef.current = audioCtx;
-    analyserRef.current = analyser;
-    freqDataRef.current = new Uint8Array(analyser.frequencyBinCount);
-    sourceRef.current = source;
+    if (analyserRef.current) return;
+    try {
+      const audioCtx = audioPlayer.getAudioContext();
+      const sourceNode = audioPlayer.getSourceNode();
+      if (!audioCtx || !sourceNode) return;
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.8;
+      sourceNode.connect(analyser);
+      analyserRef.current = analyser;
+      freqDataRef.current = new Uint8Array(analyser.frequencyBinCount);
+    } catch (err) {
+      console.warn("[AudioVisualizer] Could not set up audio analysis:", err);
+    }
   }, []);
 
   useEffect(() => {
@@ -109,8 +109,8 @@ export default function AudioVisualizer({ mode, onFrequencyData }: Props) {
       const bass = bassRef.current;
       const mid = midRef.current;
 
-      if (onFrequencyData) {
-        onFrequencyData(bass, mid);
+      if (onFreqRef.current) {
+        onFreqRef.current(bass, mid);
       }
 
       time += 0.015;
@@ -122,16 +122,16 @@ export default function AudioVisualizer({ mode, onFrequencyData }: Props) {
       const style = getComputedStyle(document.documentElement);
       const primaryColor = style.getPropertyValue("--color-primary").trim() || "#5ee8c5";
 
-      const speedMul = 1 + bass * 0.6;
-      const scaleMul = 1 + bass * 0.4;
-      const opBase = isPlaying ? 0.3 : 0.15;
+      const speedMul = 1 + bass * 2.5;
+      const scaleMul = 1 + bass * 1.8;
+      const opBase = isPlaying ? 0.45 : 0.15;
 
       switch (mode) {
         case "Glob": {
           ctx.beginPath();
           for (let i = 0; i < 100; i++) {
             const angle = (i / 100) * Math.PI * 2;
-            const r = (80 + Math.sin(time * 2 * speedMul + i * 0.3) * 30 + Math.cos(time * 1.5 * speedMul + i * 0.5) * 20) * scaleMul;
+            const r = (100 + Math.sin(time * 2.5 * speedMul + i * 0.3) * 50 + Math.cos(time * 1.8 * speedMul + i * 0.5) * 35) * scaleMul;
             const x = cx + Math.cos(angle) * r;
             const y = cy + Math.sin(angle) * r;
             i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
@@ -148,11 +148,11 @@ export default function AudioVisualizer({ mode, onFrequencyData }: Props) {
           const petals = 8;
           for (let p = 0; p < petals; p++) {
             const angle = (p / petals) * Math.PI * 2 + time * 0.5 * speedMul;
-            const r = (60 + Math.sin(time * 2 * speedMul + p) * 20) * scaleMul;
+            const r = (80 + Math.sin(time * 2.5 * speedMul + p) * 35) * scaleMul;
             ctx.beginPath();
             ctx.ellipse(
-              cx + Math.cos(angle) * 30 * scaleMul,
-              cy + Math.sin(angle) * 30 * scaleMul,
+              cx + Math.cos(angle) * 45 * scaleMul,
+              cy + Math.sin(angle) * 45 * scaleMul,
               r, r * 0.4, angle, 0, Math.PI * 2
             );
             ctx.strokeStyle = toRgba(primaryColor, opBase + Math.sin(time + p) * 0.1 + mid * 0.15);
@@ -164,7 +164,7 @@ export default function AudioVisualizer({ mode, onFrequencyData }: Props) {
         case "Arcs": {
           for (let i = 0; i < 20; i++) {
             const startAngle = time * speedMul + (i / 20) * Math.PI * 2;
-            const r = (50 + i * 8) * scaleMul;
+            const r = (50 + i * (8 + bass * 6)) * scaleMul;
             ctx.beginPath();
             ctx.arc(cx, cy, r, startAngle, startAngle + Math.PI * 0.3);
             ctx.strokeStyle = toRgba(primaryColor, Math.max(0, opBase - i * 0.008 + bass * 0.1));
@@ -175,7 +175,7 @@ export default function AudioVisualizer({ mode, onFrequencyData }: Props) {
         }
         case "Circles": {
           for (let i = 0; i < 5; i++) {
-            const r = (40 + i * 30 + Math.sin(time * 2 * speedMul + i) * 10) * scaleMul;
+            const r = (40 + i * 30 + Math.sin(time * 3 * speedMul + i) * 20) * scaleMul;
             ctx.beginPath();
             ctx.arc(cx, cy, r, 0, Math.PI * 2);
             ctx.strokeStyle = toRgba(primaryColor, Math.max(0, opBase - i * 0.02 + mid * 0.1));
@@ -187,7 +187,7 @@ export default function AudioVisualizer({ mode, onFrequencyData }: Props) {
         case "Wave": {
           ctx.beginPath();
           for (let x = 0; x < w(); x += 2) {
-            const y = cy + Math.sin(x * 0.02 + time * 3 * speedMul) * (30 + bass * 20) + Math.sin(x * 0.01 + time * 2 * speedMul) * (20 + mid * 15);
+            const y = cy + Math.sin(x * 0.02 + time * 4 * speedMul) * (50 + bass * 40) + Math.sin(x * 0.01 + time * 2.5 * speedMul) * (35 + mid * 25);
             x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
           }
           ctx.strokeStyle = toRgba(primaryColor, opBase);
@@ -199,7 +199,7 @@ export default function AudioVisualizer({ mode, onFrequencyData }: Props) {
           const rays = 30;
           for (let i = 0; i < rays; i++) {
             const angle = (i / rays) * Math.PI * 2 + time * 0.3 * speedMul;
-            const len = (40 + Math.sin(time * 3 * speedMul + i * 0.5) * 30) * scaleMul;
+            const len = (50 + Math.sin(time * 4 * speedMul + i * 0.5) * 45) * scaleMul;
             ctx.beginPath();
             ctx.moveTo(cx, cy);
             ctx.lineTo(cx + Math.cos(angle) * len, cy + Math.sin(angle) * len);
@@ -220,7 +220,7 @@ export default function AudioVisualizer({ mode, onFrequencyData }: Props) {
       cancelAnimationFrame(animFrameRef.current);
       window.removeEventListener("resize", resize);
     };
-  }, [mode, onFrequencyData]);
+  }, [mode]);
 
   return (
     <div className="audio-visualizer">

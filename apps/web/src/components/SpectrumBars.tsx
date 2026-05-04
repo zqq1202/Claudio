@@ -15,17 +15,15 @@ export default function SpectrumBars({ active }: Props) {
   const barsRef = useRef<number[]>(new Array(BAR_COUNT).fill(0));
 
   const setupAudio = useCallback(() => {
-    if (analyserRef.current) return; // already set up
+    if (analyserRef.current) return;
     try {
-      // Reuse AudioPlayer's shared AudioContext and source node
-      // instead of creating a second MediaElementAudioSourceNode (which throws)
       const audioCtx = audioPlayer.getAudioContext();
       const sourceNode = audioPlayer.getSourceNode();
+      if (!audioCtx || !sourceNode) return;
       const analyser = audioCtx.createAnalyser();
       analyser.fftSize = 256;
       analyser.smoothingTimeConstant = 0.8;
       sourceNode.connect(analyser);
-      // Don't connect analyser to destination — AudioPlayer's gainNode already does that
       analyserRef.current = analyser;
       freqDataRef.current = new Uint8Array(analyser.frequencyBinCount);
     } catch (err) {
@@ -75,19 +73,19 @@ export default function SpectrumBars({ active }: Props) {
           const idx = Math.floor(Math.pow(i / BAR_COUNT, 1.6) * freqData.length);
           target = (freqData[idx] || 0) / 255;
         } else {
-          target = 0.06 + 0.04 * Math.sin(t * 0.002 + i * 0.3);
+          target = 0.12 + 0.08 * Math.sin(t * 0.002 + i * 0.3);
         }
 
         bars[i] += (target - bars[i]) * (target > bars[i] ? 0.35 : 0.12);
 
-        const barHeight = bars[i] * h;
+        const barHeight = bars[i] * h * 1.3;
         const x = i * barWidth + gap / 2;
         const y = h - barHeight;
 
         const grad = ctx.createLinearGradient(x, h, x, y);
         grad.addColorStop(0, "rgba(255,255,255,0)");
-        grad.addColorStop(0.5, "rgba(255,255,255,0.08)");
-        grad.addColorStop(1, "rgba(255,255,255,0.25)");
+        grad.addColorStop(0.5, "rgba(255,255,255,0.15)");
+        grad.addColorStop(1, "rgba(255,255,255,0.45)");
 
         ctx.fillStyle = grad;
         ctx.fillRect(x, y, barWidth - gap, barHeight);

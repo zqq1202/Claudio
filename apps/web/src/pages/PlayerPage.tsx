@@ -50,7 +50,6 @@ export default function PlayerPage() {
   const [initialLoaded, setInitialLoaded] = useState(false);
 
   const [showSearch, setShowSearch] = useState(false);
-  const [coverFlipped, setCoverFlipped] = useState(false);
   const [showDjPanel, setShowDjPanel] = useState(false);
   const [showUserPanel, setShowUserPanel] = useState(false);
   const coverGlowRef = useRef<HTMLDivElement>(null);
@@ -94,8 +93,8 @@ export default function PlayerPage() {
     const animate = () => {
       const t = performance.now();
       if (isPlaying) {
-        const shadow = 30 + bass * 40;
-        const spread = 8 + bass * 12;
+        const shadow = 40 + bass * 80;
+        const spread = 10 + bass * 25;
         glow.style.opacity = String(0.3 + bass * 0.5);
         glow.style.boxShadow = `0 0 ${shadow}px ${spread}px var(--color-primary, #5ee8c5)`;
       } else {
@@ -175,10 +174,19 @@ export default function PlayerPage() {
     }
   };
 
+  const handleFrequencyData = useCallback((b: number, m: number) => {
+    setBass(b);
+    setMid(m);
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.style.setProperty("--audio-bass", String(bass));
+  }, [bass]);
+
   return (
     <div className="main-inner">
       {/* Music-reactive background */}
-      <AudioVisualizer mode={visualMode} onFrequencyData={(b, m) => { setBass(b); setMid(m); }} />
+      <AudioVisualizer mode={visualMode} onFrequencyData={handleFrequencyData} />
 
       {/* Fluid blob background */}
       <FluidBlobs bass={bass} mid={mid} />
@@ -224,113 +232,106 @@ export default function PlayerPage() {
         </div>
 
         <div className="player-lower">
-          <div className="cover-flip-container">
-            <div
-              className={`cover-flipper ${coverFlipped ? "flipped" : ""}`}
-              onClick={() => {
-                // Only flip when clicking on the song info area, not on controls
-                setCoverFlipped(!coverFlipped);
-              }}
-            >
-              {/* Front: Song Info + Controls */}
-              <div className="cover-front">
-                <div className="song-title-row">
+          <div className="player-content">
+            {/* Left: Cover disc */}
+            <div className="cover-section">
+              {nowPlaying?.coverUrl && (
+                <div className={`cover-disc ${isPlaying ? "spinning" : "paused"}`}>
+                  <div className="cover-disc-glow" />
+                  <img className="cover-disc-img" src={nowPlaying.coverUrl} alt={nowPlaying.title ?? "cover"} />
+                </div>
+              )}
+            </div>
+
+            {/* Right: Lyrics + song info */}
+            <div className="lyrics-section">
+              <div className="lyrics-header">
+                <div className="lyrics-title-row">
                   <div className="song-title">{nowPlaying?.title ?? t("notPlaying")}</div>
                   {nowPlaying?.songId && (
                     <button
                       className={`fav-btn ${favoriteIds.includes(nowPlaying.songId) ? "active" : ""}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleFavorite(nowPlaying.songId!, nowPlaying.title, nowPlaying.artist, nowPlaying.coverUrl);
-                      }}
+                      onClick={() => toggleFavorite(nowPlaying.songId!, nowPlaying.title, nowPlaying.artist, nowPlaying.coverUrl)}
                     >
                       {favoriteIds.includes(nowPlaying.songId) ? "❤️" : "🤍"}
                     </button>
                   )}
                 </div>
                 <div className="song-artist">{nowPlaying?.artist ?? (scene ? `${scene}` : "")}</div>
-
-                {nowPlaying?.coverUrl && (
-                  <div className="cover-art-wrap">
-                    <img className="cover-art-img" src={nowPlaying.coverUrl} alt={nowPlaying.title ?? "cover"} />
-                  </div>
-                )}
-
-                {needsUserAction && (
-                  <button className="autoplay-banner" onClick={(e) => { e.stopPropagation(); userActionPlay(); }}>
-                    ▶ Tap to Play
-                  </button>
-                )}
-
-                <div className="progress-row" onClick={(e) => e.stopPropagation()}>
-                  <span className="progress-time">{formatTime(displayProgressMs)}</span>
-                  <div
-                    ref={progressRef}
-                    className={`progress-track ${dragging ? "dragging" : ""}`}
-                    onMouseDown={handleProgressMouseDown}
-                  >
-                    <div
-                      className="progress-fill"
-                      style={{ width: durationMs > 0 ? `${(displayProgressMs / durationMs) * 100}%` : "0%" }}
-                    />
-                  </div>
-                  <span className="progress-time right">{formatTime(durationMs)}</span>
-                </div>
-
-                {lastError && (
-                  <div className="error-banner" onClick={(e) => { e.stopPropagation(); clearError(); }}>
-                    <span className="error-banner-text">{lastError}</span>
-                    <span className="error-banner-dismiss">✕</span>
-                  </div>
-                )}
-
-                <div className="controls-row" onClick={(e) => e.stopPropagation()}>
-                  <button
-                    className={`ctrl-btn ${shuffle ? "active-mode" : ""}`}
-                    onClick={toggleShuffle}
-                    title={`Shuffle: ${shuffle ? "On" : "Off"}`}
-                  >
-                    🔀
-                  </button>
-                  <button className="ctrl-btn" onClick={() => usePlayerStore.getState().previous()}>⏮</button>
-                  <button className="ctrl-btn play-btn" onClick={() => usePlayerStore.getState().togglePlay()}>
-                    {isPlaying ? "⏸" : "▶"}
-                  </button>
-                  <button className="ctrl-btn" onClick={() => usePlayerStore.getState().next()}>⏭</button>
-                  <button
-                    className={`ctrl-btn ${repeatMode !== "off" ? "active-mode" : ""}`}
-                    onClick={cycleRepeat}
-                    title={`Repeat: ${repeatMode}`}
-                  >
-                    {repeatMode === "one" ? "🔂" : "🔁"}
-                  </button>
-                  <div className="player-bar-right">
-                    <button className="volume-btn" onClick={toggleMute} title={isMuted ? "Unmute" : "Mute"}>
-                      {isMuted ? "🔇" : volume < 0.5 ? "🔉" : "🔊"}
-                    </button>
-                    <input
-                      className="volume-slider"
-                      type="range"
-                      min="0"
-                      max="1"
-                      step="0.01"
-                      value={isMuted ? 0 : volume}
-                      onChange={(e) => setVolume(parseFloat(e.target.value))}
-                      title={`Volume: ${Math.round((isMuted ? 0 : volume) * 100)}%`}
-                    />
-                  </div>
-                </div>
               </div>
-
-              {/* Back: Lyrics */}
-              <div className="cover-back">
+              <div className="lyrics-body">
                 <KaraokeLyrics songId={nowPlaying?.songId} currentTimeMs={progressMs} />
               </div>
             </div>
           </div>
+
+          {needsUserAction && (
+            <button className="autoplay-banner" onClick={() => userActionPlay()}>
+              ▶ Tap to Play
+            </button>
+          )}
+
+          {lastError && (
+            <div className="error-banner" onClick={() => clearError()}>
+              <span className="error-banner-text">{lastError}</span>
+              <span className="error-banner-dismiss">✕</span>
+            </div>
+          )}
+
+          <div className="progress-row">
+            <span className="progress-time">{formatTime(displayProgressMs)}</span>
+            <div
+              ref={progressRef}
+              className={`progress-track ${dragging ? "dragging" : ""}`}
+              onMouseDown={handleProgressMouseDown}
+            >
+              <div
+                className="progress-fill"
+                style={{ width: durationMs > 0 ? `${(displayProgressMs / durationMs) * 100}%` : "0%" }}
+              />
+            </div>
+            <span className="progress-time right">{formatTime(durationMs)}</span>
+          </div>
+
+          <div className="controls-row">
+            <button
+              className={`ctrl-btn ${shuffle ? "active-mode" : ""}`}
+              onClick={toggleShuffle}
+              title={`Shuffle: ${shuffle ? "On" : "Off"}`}
+            >
+              🔀
+            </button>
+            <button className="ctrl-btn" onClick={() => usePlayerStore.getState().previous()}>⏮</button>
+            <button className="ctrl-btn play-btn" onClick={() => usePlayerStore.getState().togglePlay()}>
+              {isPlaying ? "⏸" : "▶"}
+            </button>
+            <button className="ctrl-btn" onClick={() => usePlayerStore.getState().next()}>⏭</button>
+            <button
+              className={`ctrl-btn ${repeatMode !== "off" ? "active-mode" : ""}`}
+              onClick={cycleRepeat}
+              title={`Repeat: ${repeatMode}`}
+            >
+              {repeatMode === "one" ? "🔂" : "🔁"}
+            </button>
+            <div className="player-bar-right">
+              <button className="volume-btn" onClick={toggleMute} title={isMuted ? "Unmute" : "Mute"}>
+                {isMuted ? "🔇" : volume < 0.5 ? "🔉" : "🔊"}
+              </button>
+              <input
+                className="volume-slider"
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value={isMuted ? 0 : volume}
+                onChange={(e) => setVolume(parseFloat(e.target.value))}
+                title={`Volume: ${Math.round((isMuted ? 0 : volume) * 100)}%`}
+              />
+            </div>
+          </div>
         </div>
 
-        <WaveformBar barCount={60} />
+        <WaveformBar barCount={60} bass={bass} />
       </div>
 
       {/* Bottom spectrum bars */}

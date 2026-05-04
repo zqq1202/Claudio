@@ -51,7 +51,9 @@ export default function BorderGlow({ targetSelector = ".main-inner" }: Props) {
       const r = appEl.getBoundingClientRect();
       const R = 24;
       const t = performance.now() * 0.001;
-      const amp = 5;
+
+      const bassVal = parseFloat(document.documentElement.style.getPropertyValue("--audio-bass") || "0");
+      const amp = 5 + bassVal * 15;
 
       const style = getComputedStyle(document.documentElement);
       const pc = style.getPropertyValue("--color-primary").trim() || "#5ee8c5";
@@ -114,10 +116,10 @@ export default function BorderGlow({ targetSelector = ".main-inner" }: Props) {
       ctx.closePath();
 
       const layers = [
-        { w: 40, blur: 30, alpha: 0.03 },
-        { w: 25, blur: 15, alpha: 0.06 },
-        { w: 12, blur: 6, alpha: 0.1 },
-        { w: 6, blur: 2, alpha: 0.15 },
+        { w: 40 + bassVal * 20, blur: 30, alpha: 0.03 + bassVal * 0.05 },
+        { w: 25 + bassVal * 15, blur: 15, alpha: 0.06 + bassVal * 0.08 },
+        { w: 12 + bassVal * 8, blur: 6, alpha: 0.1 + bassVal * 0.1 },
+        { w: 6 + bassVal * 4, blur: 2, alpha: 0.15 + bassVal * 0.15 },
       ];
       for (const l of layers) {
         ctx.lineWidth = l.w;
