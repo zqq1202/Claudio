@@ -58,6 +58,9 @@
   --font-mono: "SF Mono", "Fira Code", "JetBrains Mono", monospace;
   --font-pixel: "Inter", sans-serif;
 
+  /* Nav background */
+  --bg-nav: rgba(11, 11, 16, 0.8);
+
   /* Dynamic color vars (overridden by extractColors when song plays) */
   --color-primary: #5ee8c5;
   --color-secondary: #4a6cf7;
@@ -135,7 +138,7 @@ body::after {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(11, 11, 16, 0.8);
+  background: var(--bg-nav);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border);
@@ -3538,6 +3541,11 @@ body::after {
   --mint-glow: rgba(45, 184, 138, 0.2);
   --mint-subtle: rgba(45, 184, 138, 0.06);
   --mint-faint: rgba(45, 184, 138, 0.03);
+  --bg-nav: rgba(248, 249, 250, 0.85);
+  --color-primary: #2db88a;
+  --color-secondary: #4a6cf7;
+  --color-accent: #7c3aed;
+  --blob-secondary: #7c3aed;
 }
 
 html.theme-transitioning,
@@ -3581,6 +3589,239 @@ html.theme-transitioning *::after {
 }
 [data-theme="light"] .mini-player:hover {
   background: rgba(248, 249, 250, 0.92);
+}
+
+/* ===== Light Theme: Component Overrides ===== */
+
+/* Player card */
+[data-theme="light"] .player-card {
+  background: var(--bg-card);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--border);
+}
+
+/* Player upper (header area) */
+[data-theme="light"] .player-upper {
+  background: var(--bg-card-upper);
+}
+
+/* DJ header text */
+[data-theme="light"] .dj-name {
+  color: var(--text-primary);
+}
+[data-theme="light"] .dj-status {
+  color: var(--text-secondary);
+}
+[data-theme="light"] .dj-time {
+  color: var(--text-secondary);
+}
+
+/* Song info */
+[data-theme="light"] .song-title {
+  color: var(--text-primary);
+}
+[data-theme="light"] .song-artist {
+  color: var(--text-secondary);
+}
+
+/* Control buttons */
+[data-theme="light"] .ctrl-btn {
+  background: var(--bg-glass);
+  color: var(--text-primary);
+}
+[data-theme="light"] .ctrl-btn:hover {
+  background: var(--bg-glass-strong);
+}
+[data-theme="light"] .ctrl-btn.play-btn {
+  background: var(--mint);
+  color: white;
+}
+[data-theme="light"] .ctrl-btn.active-mode {
+  color: var(--mint);
+}
+
+/* Progress bar */
+[data-theme="light"] .progress-track {
+  background: var(--bg-glass-strong);
+}
+[data-theme="light"] .progress-fill {
+  background: var(--mint);
+}
+[data-theme="light"] .progress-time {
+  color: var(--text-muted);
+}
+
+/* Volume */
+[data-theme="light"] .volume-slider {
+  accent-color: var(--mint);
+}
+[data-theme="light"] .volume-btn {
+  color: var(--text-secondary);
+}
+
+/* Chat section */
+[data-theme="light"] .chat-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+}
+[data-theme="light"] .chat-msg {
+  color: var(--text-primary);
+}
+
+/* Intent input */
+[data-theme="light"] .intent-input-wrapper {
+  background: var(--bg-card);
+  border-top: 1px solid var(--border);
+}
+[data-theme="light"] .intent-input {
+  color: var(--text-primary);
+  background: var(--bg-glass);
+}
+[data-theme="light"] .intent-input::placeholder {
+  color: var(--text-muted);
+}
+[data-theme="light"] .intent-send-btn {
+  background: var(--mint);
+}
+
+/* Extras panel */
+[data-theme="light"] .extras-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+}
+[data-theme="light"] .section-label {
+  color: var(--text-secondary);
+}
+[data-theme="light"] .theme-btn {
+  background: var(--bg-glass);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+[data-theme="light"] .theme-btn.active {
+  background: var(--mint-subtle);
+  border-color: var(--mint);
+  color: var(--mint);
+}
+
+/* Queue */
+[data-theme="light"] .queue-item {
+  background: var(--bg-glass);
+  border: 1px solid var(--border);
+}
+[data-theme="light"] .queue-item:hover {
+  background: var(--bg-glass-strong);
+}
+
+/* Search panel */
+[data-theme="light"] .search-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+}
+[data-theme="light"] .search-input {
+  background: var(--bg-glass);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+[data-theme="light"] .search-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* Waveform bar */
+[data-theme="light"] .waveform-bar {
+  background: var(--bg-glass);
+}
+
+/* Spectrum bars */
+[data-theme="light"] .spectrum-bars-container {
+  opacity: 0.6;
+}
+
+/* Dialog */
+[data-theme="light"] .dialog-overlay {
+  background: rgba(0, 0, 0, 0.3);
+}
+[data-theme="light"] .dialog-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+}
+[data-theme="light"] .dialog-input {
+  background: var(--bg-glass);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+[data-theme="light"] .dialog-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* User avatar button */
+[data-theme="light"] .user-avatar-btn {
+  background: var(--bg-glass);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+/* Fav button */
+[data-theme="light"] .fav-btn {
+  color: var(--text-muted);
+}
+[data-theme="light"] .fav-btn.active {
+  color: #f06060;
+}
+
+/* Extras / search toggle buttons */
+[data-theme="light"] .extras-btn {
+  background: var(--bg-glass);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+[data-theme="light"] .extras-btn:hover {
+  background: var(--bg-glass-strong);
+}
+
+/* Autoplay banner */
+[data-theme="light"] .autoplay-banner {
+  background: var(--mint);
+  color: white;
+}
+
+/* Error banner */
+[data-theme="light"] .error-banner {
+  background: rgba(240, 96, 96, 0.1);
+  color: var(--red);
+  border: 1px solid rgba(240, 96, 96, 0.2);
+}
+
+/* Toast */
+[data-theme="light"] .toast {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Save playlist button */
+[data-theme="light"] .btn-save-playlist {
+  background: var(--mint-subtle);
+  color: var(--mint);
+  border: 1px solid var(--mint);
+}
+
+/* Cover glow */
+[data-theme="light"] .cover-glow {
+  box-shadow: 0 0 20px 6px var(--color-primary, #2db88a);
+}
+
+/* Nav link active (add bottom accent) */
+[data-theme="light"] .nav-link.active {
+  color: var(--mint);
+  border-bottom: 2px solid var(--mint);
+}
+
+/* User panel / DJ panel */
+[data-theme="light"] .dj-panel,
+[data-theme="light"] .user-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
 }
 
 /* ===== Button Beautification (Task 3) ===== */
@@ -4116,4 +4357,29 @@ button {
   border-color: var(--border-mint);
   color: var(--mint);
   background: var(--mint-subtle);
+}
+
+/* ===== Light Theme Visual Overrides ===== */
+[data-theme="light"] .top-nav {
+  background: rgba(248, 249, 250, 0.85);
+  border-bottom: 1px solid var(--border);
+}
+
+[data-theme="light"] .fluid-blob {
+  mix-blend-mode: multiply;
+  opacity: 0.3;
+}
+[data-theme="light"] .fluid-blob.primary {
+  opacity: 0.25;
+}
+[data-theme="light"] .fluid-blob.secondary {
+  opacity: 0.2;
+}
+
+[data-theme="light"] .border-glow-canvas {
+  opacity: 0.4;
+}
+
+[data-theme="light"] body::before {
+  opacity: 0.2;
 }

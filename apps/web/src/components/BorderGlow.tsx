@@ -51,7 +51,7 @@ export default function BorderGlow({ targetSelector = ".main-inner" }: Props) {
       const r = appEl.getBoundingClientRect();
       const R = 24;
       const t = performance.now() * 0.001;
-      const amp = 10;
+      const amp = 5;
 
       const style = getComputedStyle(document.documentElement);
       const pc = style.getPropertyValue("--color-primary").trim() || "#5ee8c5";
@@ -114,10 +114,10 @@ export default function BorderGlow({ targetSelector = ".main-inner" }: Props) {
       ctx.closePath();
 
       const layers = [
-        { w: 80, blur: 40, alpha: 0.08 },
-        { w: 55, blur: 25, alpha: 0.15 },
-        { w: 35, blur: 12, alpha: 0.25 },
-        { w: 18, blur: 5, alpha: 0.35 },
+        { w: 40, blur: 30, alpha: 0.03 },
+        { w: 25, blur: 15, alpha: 0.06 },
+        { w: 12, blur: 6, alpha: 0.1 },
+        { w: 6, blur: 2, alpha: 0.15 },
       ];
       for (const l of layers) {
         ctx.lineWidth = l.w;
