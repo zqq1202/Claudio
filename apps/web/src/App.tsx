@@ -8,6 +8,7 @@ import MiniPlayer from "./components/MiniPlayer";
 import ThemeToggle from "./components/ThemeToggle";
 import ParticleCanvas from "./components/ParticleCanvas";
 import VoiceOverlay from "./components/VoiceOverlay";
+import ErrorBoundary from "./components/ErrorBoundary";
 import PlayerPage from "./pages/PlayerPage";
 import HistoryPage from "./pages/HistoryPage";
 import SettingsPage from "./pages/SettingsPage";
@@ -77,13 +78,15 @@ export default function App() {
 
       {/* Main Content */}
       <main className={`main-content ${showMiniPlayer ? "has-mini-player" : ""}`}>
-        <Routes>
-          <Route path="/" element={<PlayerPage />} />
-          <Route path="/playlists" element={<PlaylistPage />} />
-          <Route path="/history" element={<HistoryPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-        </Routes>
+        <ErrorBoundary>
+          <Routes>
+            <Route path="/" element={<PlayerPage />} />
+            <Route path="/playlists" element={<PlaylistPage />} />
+            <Route path="/history" element={<HistoryPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+          </Routes>
+        </ErrorBoundary>
       </main>
 
       {/* MiniPlayer — fixed bottom bar when not on home page */}

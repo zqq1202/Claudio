@@ -10,27 +10,27 @@ interface Props {
 export default function SpectrumBars({ active }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animFrameRef = useRef<number>(0);
-  const audioCtxRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const freqDataRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
   const barsRef = useRef<number[]>(new Array(BAR_COUNT).fill(0));
-  const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
 
   const setupAudio = useCallback(() => {
-    if (audioCtxRef.current) return;
-    const audioEl = audioPlayer.audioElement;
-    const ACtor = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    const audioCtx = new ACtor();
-    const analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 256;
-    analyser.smoothingTimeConstant = 0.8;
-    const source = audioCtx.createMediaElementSource(audioEl);
-    source.connect(analyser);
-    analyser.connect(audioCtx.destination);
-    audioCtxRef.current = audioCtx;
-    analyserRef.current = analyser;
-    freqDataRef.current = new Uint8Array(analyser.frequencyBinCount);
-    sourceRef.current = source;
+    if (analyserRef.current) return; // already set up
+    try {
+      // Reuse AudioPlayer's shared AudioContext and source node
+      // instead of creating a second MediaElementAudioSourceNode (which throws)
+      const audioCtx = audioPlayer.getAudioContext();
+      const sourceNode = audioPlayer.getSourceNode();
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.8;
+      sourceNode.connect(analyser);
+      // Don't connect analyser to destination — AudioPlayer's gainNode already does that
+      analyserRef.current = analyser;
+      freqDataRef.current = new Uint8Array(analyser.frequencyBinCount);
+    } catch (err) {
+      console.warn("[SpectrumBars] Could not set up audio analysis:", err);
+    }
   }, []);
 
   useEffect(() => {

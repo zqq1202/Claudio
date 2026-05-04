@@ -172,6 +172,18 @@ class AudioPlayerManager {
     return this.audio;
   }
 
+  /** Expose the shared AudioContext for SpectrumBars etc. */
+  getAudioContext(): AudioContext {
+    this.ensureGainNode();
+    return this.audioCtx!;
+  }
+
+  /** Expose the shared source node so other components can create analysers from it */
+  getSourceNode(): MediaElementAudioSourceNode {
+    this.ensureGainNode();
+    return this.sourceNode!;
+  }
+
   get currentTimeMs() {
     return this.audio.currentTime * 1000;
   }
