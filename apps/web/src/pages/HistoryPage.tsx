@@ -60,6 +60,11 @@ export default function HistoryPage() {
 
     return (
         <div className="history-page">
+            <div className="ambient-mesh">
+                <div className="ambient-blob ambient-blob-1" />
+                <div className="ambient-blob ambient-blob-2" />
+                <div className="ambient-blob ambient-blob-3" />
+            </div>
             <div className="history-header">
                 <div className="history-title">History</div>
                 <div className="history-count">{plays.length} plays</div>

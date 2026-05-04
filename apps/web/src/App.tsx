@@ -1,8 +1,10 @@
 import { Routes, Route, Link, useLocation, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { useI18n } from "./i18n/context";
 import { usePlayerStore } from "./stores/playerStore";
 import { useKeyboard } from "./hooks/useKeyboard";
 import { useTheme } from "./hooks/useTheme";
+import { wsClient } from "./api/ws";
 import ToastContainer, { ShortcutHintBar } from "./components/Toast";
 import MiniPlayer from "./components/MiniPlayer";
 import ThemeToggle from "./components/ThemeToggle";
@@ -21,8 +23,20 @@ export default function App() {
   const { t, lang, toggleLang } = useI18n();
   const { isDark, toggleTheme } = useTheme();
   const nowPlaying = usePlayerStore((s) => s.nowPlaying);
+  const fetchNow = usePlayerStore((s) => s.fetchNow);
+  const loadFavorites = usePlayerStore((s) => s.loadFavorites);
+  const restorePlayback = usePlayerStore((s) => s.restorePlayback);
 
   useKeyboard();
+
+  // Global init: WS + fetch now playing + favorites + restore (runs once, never unmounts)
+  useEffect(() => {
+    fetchNow();
+    loadFavorites();
+    restorePlayback();
+    wsClient.connect();
+    // Don't disconnect on cleanup — App never unmounts in SPA
+  }, [fetchNow, loadFavorites, restorePlayback]);
 
   const showMiniPlayer = !!nowPlaying && location.pathname !== "/";
 

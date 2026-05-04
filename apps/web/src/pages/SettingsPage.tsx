@@ -57,6 +57,11 @@ export default function SettingsPage() {
   return (
     <div className="main-inner">
       <div className="settings-page">
+        <div className="ambient-mesh">
+          <div className="ambient-blob ambient-blob-1" />
+          <div className="ambient-blob ambient-blob-2" />
+          <div className="ambient-blob ambient-blob-3" />
+        </div>
         <div className="settings-title">{t("settingsTitle")}</div>
 
         {/* Service Status */}

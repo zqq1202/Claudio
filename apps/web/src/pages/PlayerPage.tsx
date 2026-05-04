@@ -17,7 +17,6 @@ import DjPanel from "../components/DjPanel";
 import UserPanel from "../components/UserPanel";
 import { PlayerSkeleton } from "../components/Skeleton";
 import { api } from "../api/client";
-import { wsClient } from "../api/ws";
 import { extractColors } from "../utils/colorExtractor";
 import { burstParticles } from "../components/ParticleCanvas";
 
@@ -35,18 +34,17 @@ type ModeKey = (typeof VISUAL_MODES)[number]["key"];
 export default function PlayerPage() {
   const {
     nowPlaying, queue, scene, djStatus, isPlaying, needsUserAction, progressMs, durationMs,
-    fetchNow, playItem, userActionPlay, restorePlayback,
+    playItem, userActionPlay,
     shuffle, repeatMode, toggleShuffle, cycleRepeat,
     lastError, clearError,
-    favoriteIds, loadFavorites, toggleFavorite,
+    favoriteIds, toggleFavorite,
     volume, isMuted, setVolume, toggleMute,
   } = usePlayerStore();
   const { t } = useI18n();
 
-  const [visualMode, setVisualMode] = useState<ModeKey>("Glob");
+  const [visualMode, setVisualMode] = useState<ModeKey>("Arcs");
   const [bass, setBass] = useState(0);
   const [mid, setMid] = useState(0);
-  const [initialLoaded, setInitialLoaded] = useState(false);
 
   const [showLeftSidebar, setShowLeftSidebar] = useState(false);
   const [showRightSidebar, setShowRightSidebar] = useState(false);
@@ -62,14 +60,6 @@ export default function PlayerPage() {
   const [dragging, setDragging] = useState(false);
   const [dragProgress, setDragProgress] = useState(0);
   const progressRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    fetchNow().finally(() => setInitialLoaded(true));
-    loadFavorites();
-    restorePlayback();
-    wsClient.connect();
-    return () => wsClient.disconnect();
-  }, [fetchNow, loadFavorites, restorePlayback]);
 
   // Extract dynamic colors from album art
   useEffect(() => {

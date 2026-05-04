@@ -124,6 +124,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
                             title: r.title,
                             artist: r.artist,
                             coverUrl: r.coverUrl,
+                            audioUrl: `/api/audio?id=${encodeURIComponent(r.id)}&title=${encodeURIComponent(r.title)}&artist=${encodeURIComponent(r.artist)}`,
                         }));
                         const aiMsg: ChatMessage = {
                             id: `ai_${Date.now()}`,
@@ -254,6 +255,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
                         title: s.name,
                         artist: s.artist,
                         coverUrl: s.cover,
+                        audioUrl: `/api/audio?id=${encodeURIComponent(s.id)}&title=${encodeURIComponent(s.name ?? "")}&artist=${encodeURIComponent(s.artist ?? "")}`,
                     }))
                     : collectedSongs;
 

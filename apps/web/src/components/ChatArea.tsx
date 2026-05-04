@@ -147,6 +147,7 @@ function StructuredContent({
             title: s.name,
             artist: s.artist,
             coverUrl: s.cover,
+            audioUrl: `/api/audio?id=${encodeURIComponent(s.id)}&title=${encodeURIComponent(s.name ?? "")}&artist=${encodeURIComponent(s.artist ?? "")}`,
         }))
         : [];
 
@@ -201,7 +202,6 @@ function StructuredContent({
                             title={song.title}
                             artist={song.artist}
                             coverUrl={song.coverUrl}
-                            disabled={!song.audioUrl}
                         />
                     ))}
                     {isStreaming && (
@@ -233,15 +233,16 @@ function LegacySongCard({ song, index, isStreaming }: { song: RecommendedSong; i
     const playItem = usePlayerStore((s) => s.playItem);
 
     const handleClick = () => {
-        if (!song.audioUrl) return;
+        const sid = song.songId ?? song.id;
+        if (!sid) return;
         const item: QueueItem = {
             id: song.id,
             type: "song",
-            songId: song.songId,
+            songId: sid,
             title: song.title,
             artist: song.artist,
             coverUrl: song.coverUrl,
-            audioUrl: song.audioUrl,
+            audioUrl: song.audioUrl || `/api/audio?id=${encodeURIComponent(sid)}&title=${encodeURIComponent(song.title ?? "")}&artist=${encodeURIComponent(song.artist ?? "")}`,
             status: "pending",
         };
         playItem(item);

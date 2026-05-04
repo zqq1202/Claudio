@@ -18,16 +18,17 @@ type ParsedLine = {
 export default function KaraokeLyrics({ songId, currentTimeMs }: Props) {
   const [lines, setLines] = useState<ParsedLine[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
-  const activeRef = useRef<HTMLDivElement>(null);
+  const activeLineRef = useRef<HTMLDivElement>(null);
   const userScrollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [autoScroll, setAutoScroll] = useState(true);
 
-  // Time in ref — char highlighting uses rAF, NOT React re-renders
+  // Time in ref — direct DOM update via rAF, NOT React re-renders
   const timeRef = useRef(currentTimeMs);
   timeRef.current = currentTimeMs;
 
-  // Active line index — updated via interval(200ms), not per-frame useMemo
+  // Active line index
   const [activeIndex, setActiveIndex] = useState(-1);
+  const prevIdxRef = useRef(-1);
 
   const fetchLyric = useCallback(async (id: string) => {
     try {
@@ -47,66 +48,73 @@ export default function KaraokeLyrics({ songId, currentTimeMs }: Props) {
     }
   }, [songId, fetchLyric]);
 
-  // Detect active line at 200ms intervals (not per-frame)
+  // Single rAF loop: active line detection + --progress direct DOM update
   useEffect(() => {
     if (lines.length === 0) { setActiveIndex(-1); return; }
-    const iv = setInterval(() => {
+    let raf: number;
+
+    const tick = () => {
       const t = timeRef.current;
+
+      // Find active line (optimized — search near previous index)
       let idx = -1;
-      for (let i = 0; i < lines.length; i++) {
+      const startSearch = Math.max(0, prevIdxRef.current - 1);
+      for (let i = startSearch; i < lines.length; i++) {
         if (lines[i].startMs <= t) idx = i;
         else break;
       }
-      setActiveIndex(idx);
-    }, 200);
-    return () => clearInterval(iv);
+
+      // Update React state only on change
+      if (idx !== prevIdxRef.current) {
+        prevIdxRef.current = idx;
+        setActiveIndex(idx);
+      }
+
+      // Update --progress via direct DOM (no React re-render)
+      if (activeLineRef.current && idx >= 0) {
+        const line = lines[idx];
+        let progress: number;
+        if (line.words && line.words.length > 0) {
+          // Per-word progress (more accurate for yrc enhanced lyrics)
+          progress = calcWordProgress(line.words, t, lines[idx + 1]?.startMs, line.startMs);
+        } else {
+          // Simulated progress based on line duration
+          const nextStart = lines[idx + 1]?.startMs ?? (line.startMs + 5000);
+          const duration = nextStart - line.startMs;
+          progress = Math.max(0, Math.min(100, ((t - line.startMs) / duration) * 100));
+        }
+        activeLineRef.current.style.setProperty("--progress", `${progress}%`);
+      }
+
+      raf = requestAnimationFrame(tick);
+    };
+
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
   }, [lines]);
 
-  // Scroll active line into view
+  // Scroll active line into view — position at 35% from top
   const prevActiveRef = useRef<number>(-1);
   useEffect(() => {
     if (activeIndex !== prevActiveRef.current) {
       prevActiveRef.current = activeIndex;
-      if (autoScroll && activeRef.current) {
-        activeRef.current.scrollIntoView({ block: "center", behavior: "smooth" });
+      if (autoScroll && containerRef.current && activeLineRef.current) {
+        const container = containerRef.current;
+        const line = activeLineRef.current;
+        const containerH = container.clientHeight;
+        const lineTop = line.offsetTop;
+        const lineH = line.offsetHeight;
+        const targetScroll = lineTop - containerH * 0.35 + lineH / 2;
+        container.scrollTo({ top: targetScroll, behavior: "smooth" });
       }
     }
   }, [activeIndex, autoScroll]);
 
-  // User scroll pauses auto-scroll
+  // User scroll pauses auto-scroll (8s timeout)
   const handleScroll = useCallback(() => {
     if (userScrollTimer.current) clearTimeout(userScrollTimer.current);
     setAutoScroll(false);
-    userScrollTimer.current = setTimeout(() => setAutoScroll(true), 5000);
-  }, []);
-
-  // rAF loop for char-level highlighting (direct DOM, zero React re-renders)
-  useEffect(() => {
-    let raf: number;
-    const tick = () => {
-      const t = timeRef.current;
-      const container = containerRef.current;
-      if (container) {
-        const chars = container.querySelectorAll<HTMLElement>(".karaoke-char[data-start]");
-        for (let i = 0; i < chars.length; i++) {
-          const start = Number(chars[i].dataset.start);
-          if (t >= start) {
-            if (!chars[i].classList.contains("lit")) {
-              chars[i].classList.add("lit");
-              chars[i].classList.remove("unlit");
-            }
-          } else {
-            if (!chars[i].classList.contains("unlit")) {
-              chars[i].classList.add("unlit");
-              chars[i].classList.remove("lit");
-            }
-          }
-        }
-      }
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    userScrollTimer.current = setTimeout(() => setAutoScroll(true), 8000);
   }, []);
 
   if (lines.length === 0) {
@@ -128,25 +136,11 @@ export default function KaraokeLyrics({ songId, currentTimeMs }: Props) {
         return (
           <div
             key={`${songId}_${i}`}
-            ref={isActive ? activeRef : undefined}
+            ref={isActive ? activeLineRef : undefined}
             className={className}
           >
-            <div className="karaoke-text">
-              {isActive && line.words && line.words.length > 0 ? (
-                <EnhancedLineStatic
-                  words={line.words}
-                  nextLineStartMs={lines[i + 1]?.startMs}
-                  lineStartMs={line.startMs}
-                />
-              ) : isActive ? (
-                <SimulatedLineStatic
-                  content={line.content}
-                  lineStartMs={line.startMs}
-                  nextLineStartMs={lines[i + 1]?.startMs}
-                />
-              ) : (
-                <span>{line.content}</span>
-              )}
+            <div className={`karaoke-text ${isActive ? "karaoke-sweep" : ""}`}>
+              {line.content}
             </div>
             {line.translation && (
               <div className="karaoke-translation">{line.translation}</div>
@@ -159,77 +153,25 @@ export default function KaraokeLyrics({ songId, currentTimeMs }: Props) {
   );
 }
 
-/**
- * Enhanced (word-level timed) lyrics — renders static spans with data-start.
- * The rAF loop in the parent toggles .lit/.unlit classes.
- * This component NEVER re-renders for time changes.
- */
-function EnhancedLineStatic({
-  words,
-  nextLineStartMs,
-  lineStartMs,
-}: {
-  words: EnhancedWord[];
-  nextLineStartMs?: number;
-  lineStartMs: number;
-}) {
-  const chars: React.ReactNode[] = [];
+/** Calculate progress for word-level timed lyrics */
+function calcWordProgress(words: EnhancedWord[], timeMs: number, nextLineStartMs?: number, lineStartMs?: number): number {
+  let totalChars = 0;
+  let litChars = 0;
+  const fallback = lineStartMs ? lineStartMs + 30000 : 30000;
 
   for (let w = 0; w < words.length; w++) {
     const word = words[w];
     const wordStart = word.startMillisecond;
-    const wordEnd = words[w + 1]?.startMillisecond ?? nextLineStartMs ?? (lineStartMs + 30000);
-    const wordDuration = Math.max(wordEnd - wordStart, 1);
-
-    for (let c = 0; c < word.content.length; c++) {
-      const charStart = wordStart + (wordDuration * c) / word.content.length;
-      chars.push(
-        <span
-          key={`${w}_${c}`}
-          className="karaoke-char unlit"
-          data-start={charStart}
-        >
-          {word.content[c]}
-        </span>
-      );
+    const wordEnd = words[w + 1]?.startMillisecond ?? nextLineStartMs ?? fallback;
+    totalChars += word.content.length;
+    if (timeMs >= wordEnd) {
+      litChars += word.content.length;
+    } else if (timeMs > wordStart) {
+      litChars += word.content.length * ((timeMs - wordStart) / (wordEnd - wordStart));
     }
   }
 
-  return <>{chars}</>;
-}
-
-/**
- * Simulated (no word-level timing) lyrics — evenly distributes time across chars.
- * Renders static spans with data-start. rAF loop handles highlighting.
- */
-function SimulatedLineStatic({
-  content,
-  lineStartMs,
-  nextLineStartMs,
-}: {
-  content: string;
-  lineStartMs: number;
-  nextLineStartMs?: number;
-}) {
-  const lineDuration = Math.max((nextLineStartMs ?? (lineStartMs + 5000)) - lineStartMs, 1);
-  const chars = Array.from(content);
-
-  return (
-    <>
-      {chars.map((char, i) => {
-        const charStart = lineStartMs + (lineDuration * i) / chars.length;
-        return (
-          <span
-            key={i}
-            className="karaoke-char unlit"
-            data-start={charStart}
-          >
-            {char}
-          </span>
-        );
-      })}
-    </>
-  );
+  return totalChars > 0 ? (litChars / totalChars) * 100 : 0;
 }
 
 function parseLyrics(lrc: string, tlyric?: string, yrc?: string): ParsedLine[] {

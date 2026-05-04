@@ -73,6 +73,11 @@ export default function ProfilePage() {
 
   return (
     <div className="main-inner">
+      <div className="ambient-mesh">
+        <div className="ambient-blob ambient-blob-1" />
+        <div className="ambient-blob ambient-blob-2" />
+        <div className="ambient-blob ambient-blob-3" />
+      </div>
       <div className="profile-card">
         {/* Header */}
         <div className="profile-header">

@@ -2013,7 +2013,7 @@ body::after {
 
 /* ===== Karaoke Lyrics ===== */
 .karaoke-panel {
-  height: 220px;
+  height: 340px;
   position: relative;
   margin-top: 12px;
   border-radius: var(--radius-md);
@@ -2029,7 +2029,7 @@ body::after {
 }
 
 .karaoke-line-wrapper {
-  padding: 8px 20px;
+  padding: 10px 20px;
   text-align: center;
   transition: opacity 0.3s ease;
 }
@@ -2054,7 +2054,7 @@ body::after {
 }
 
 .karaoke-line-wrapper.active .karaoke-text {
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 700;
   color: var(--text-primary);
   text-shadow: 0 0 20px rgba(94,232,197,0.1);
@@ -2071,6 +2071,28 @@ body::after {
 
 .karaoke-char.unlit {
   color: var(--text-dim);
+}
+
+/* ===== Karaoke Gradient Sweep (NetEase Cloud Style) ===== */
+@property --lyric-progress {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 0%;
+}
+
+.karaoke-sweep {
+  color: transparent !important;
+  background: linear-gradient(
+    to right,
+    var(--mint, #5ee8c5) 0%,
+    var(--mint, #5ee8c5) var(--progress, 0%),
+    var(--text-dim) var(--progress, 0%),
+    var(--text-dim) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 700;
 }
 
 .karaoke-translation {
@@ -2090,7 +2112,7 @@ body::after {
 }
 
 .karaoke-spacer {
-  height: 80px;
+  height: 120px;
 }
 
 /* ===== Playlist Page ===== */
@@ -4053,7 +4075,7 @@ button {
   transform: translateX(-50%);
   width: 440px;
   max-width: 100%;
-  height: 80px;
+  height: 120px;
   z-index: 1;
   pointer-events: none;
 }
@@ -4547,4 +4569,75 @@ button {
 
 [data-theme="light"] body::before {
   opacity: 0.2;
+}
+
+/* ===== Ambient Mesh Gradient Background (non-player pages) ===== */
+.ambient-mesh {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.ambient-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.12;
+  will-change: transform;
+}
+
+.ambient-blob-1 {
+  width: 50vw;
+  height: 50vw;
+  top: -15%;
+  left: -10%;
+  background: radial-gradient(circle, var(--color-primary, #5ee8c5), transparent 70%);
+  animation: ambientDrift1 20s ease-in-out infinite;
+}
+
+.ambient-blob-2 {
+  width: 40vw;
+  height: 40vw;
+  bottom: -20%;
+  right: -10%;
+  background: radial-gradient(circle, #8b5cf6, transparent 70%);
+  animation: ambientDrift2 25s ease-in-out infinite;
+}
+
+.ambient-blob-3 {
+  width: 35vw;
+  height: 35vw;
+  top: 45%;
+  left: 35%;
+  background: radial-gradient(circle, #3b82f6, transparent 70%);
+  animation: ambientDrift3 22s ease-in-out infinite;
+}
+
+@keyframes ambientDrift1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(8%, 12%) scale(1.1); }
+  66% { transform: translate(-4%, -8%) scale(0.95); }
+}
+
+@keyframes ambientDrift2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-12%, -8%) scale(1.05); }
+  66% { transform: translate(8%, 4%) scale(1.08); }
+}
+
+@keyframes ambientDrift3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-10%, 15%) scale(1.15); }
+}
+
+[data-theme="light"] .ambient-blob {
+  opacity: 0.08;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ambient-blob {
+    animation: none !important;
+  }
 }
