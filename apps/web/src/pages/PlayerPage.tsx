@@ -238,17 +238,23 @@ export default function PlayerPage() {
                   <div className="song-title">{nowPlaying?.title ?? t("notPlaying")}</div>
                   {nowPlaying?.songId && (
                     <button
-                      className={`fav-btn ${favoriteIds.has(nowPlaying.songId) ? "active" : ""}`}
+                      className={`fav-btn ${favoriteIds.includes(nowPlaying.songId) ? "active" : ""}`}
                       onClick={(e) => {
                         e.stopPropagation();
                         toggleFavorite(nowPlaying.songId!, nowPlaying.title, nowPlaying.artist, nowPlaying.coverUrl);
                       }}
                     >
-                      {favoriteIds.has(nowPlaying.songId) ? "❤️" : "🤍"}
+                      {favoriteIds.includes(nowPlaying.songId) ? "❤️" : "🤍"}
                     </button>
                   )}
                 </div>
                 <div className="song-artist">{nowPlaying?.artist ?? (scene ? `${scene}` : "")}</div>
+
+                {nowPlaying?.coverUrl && (
+                  <div className="cover-art-wrap">
+                    <img className="cover-art-img" src={nowPlaying.coverUrl} alt={nowPlaying.title ?? "cover"} />
+                  </div>
+                )}
 
                 {needsUserAction && (
                   <button className="autoplay-banner" onClick={(e) => { e.stopPropagation(); userActionPlay(); }}>

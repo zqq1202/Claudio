@@ -786,6 +786,20 @@ body::after {
   margin-bottom: 20px;
 }
 
+.cover-art-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+.cover-art-img {
+  width: 180px;
+  height: 180px;
+  border-radius: 12px;
+  object-fit: cover;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+  background: var(--bg-glass);
+}
+
 /* Progress */
 .progress-row {
   display: flex;

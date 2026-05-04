@@ -25,7 +25,7 @@ export default function UserPanel({ visible, onClose }: UserPanelProps) {
       .getRecentPlays(10)
       .then((res) => setHistory(res.plays ?? []))
       .catch(() => {});
-  }, [visible, favoriteIds.size]);
+  }, [visible, favoriteIds.length]);
 
   const handlePlayFavorite = (fav: FavoriteItem) => {
     if (!fav.songId) return;
@@ -62,7 +62,7 @@ export default function UserPanel({ visible, onClose }: UserPanelProps) {
         <div>
           <div className="user-panel-name">Listener</div>
           <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
-            {favoriteIds.size} favorites
+            {favoriteIds.length} favorites
           </div>
         </div>
       </div>

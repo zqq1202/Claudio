@@ -40,14 +40,30 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const { t } = useI18n();
 
+  const [error, setError] = useState(false);
+
   useEffect(() => {
-    api.getProfile().then(setProfile).catch(console.error);
+    api.getProfile().then(setProfile).catch((err) => {
+      console.error(err);
+      setError(true);
+    });
   }, []);
 
   if (!profile) {
     return (
       <div className="main-inner">
-        <div className="loading-text">{t("loading")}</div>
+        <div className="profile-card">
+          <div className="profile-header">
+            <div className="profile-avatar"><span style={{ fontSize: 28 }}>🎧</span></div>
+            <div className="profile-name-block">
+              <div className="profile-name">Claudio</div>
+            </div>
+          </div>
+          <div className="profile-desc">{t("profileSubtitle")}</div>
+          <div className="profile-section">
+            <div className="empty-state">{error ? t("emptyProfile") : t("loading")}</div>
+          </div>
+        </div>
       </div>
     );
   }

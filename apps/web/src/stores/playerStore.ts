@@ -47,7 +47,7 @@ interface PlayerState {
   clearError: () => void;
 
   // Favorites
-  favoriteIds: Set<string>;
+  favoriteIds: string[];
   loadFavorites: () => Promise<void>;
   toggleFavorite: (songId: string, title?: string, artist?: string, coverUrl?: string) => Promise<void>;
 
@@ -204,27 +204,24 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     clearError: () => set({ lastError: null }),
 
     // Favorites
-    favoriteIds: new Set<string>(),
+    favoriteIds: [],
     loadFavorites: async () => {
       try {
         const { favorites } = await api.getFavorites();
-        set({ favoriteIds: new Set(favorites.map((f) => f.songId)) });
+        set({ favoriteIds: favorites.map((f) => f.songId) });
       } catch (err) {
         console.error("Failed to load favorites:", err);
       }
     },
     toggleFavorite: async (songId: string, title?: string, artist?: string, coverUrl?: string) => {
       const { favoriteIds } = get();
-      const isFav = favoriteIds.has(songId);
-      const next = new Set(favoriteIds);
+      const isFav = favoriteIds.includes(songId);
       if (isFav) {
-        next.delete(songId);
-        set({ favoriteIds: next });
-        try { await api.removeFavorite(songId); } catch { next.add(songId); set({ favoriteIds: next }); }
+        set({ favoriteIds: favoriteIds.filter((id) => id !== songId) });
+        try { await api.removeFavorite(songId); } catch { set({ favoriteIds: get().favoriteIds.concat(songId) }); }
       } else {
-        next.add(songId);
-        set({ favoriteIds: next });
-        try { await api.addFavorite({ songId, title, artist, coverUrl }); } catch { next.delete(songId); set({ favoriteIds: next }); }
+        set({ favoriteIds: [...favoriteIds, songId] });
+        try { await api.addFavorite({ songId, title, artist, coverUrl }); } catch { set({ favoriteIds: get().favoriteIds.filter((id) => id !== songId) }); }
       }
     },
 

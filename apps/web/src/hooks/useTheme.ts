@@ -18,7 +18,13 @@ export function useTheme() {
   const toggleTheme = useCallback(() => {
     resetColors(); // clear dynamic color overrides so theme CSS takes effect
     document.documentElement.classList.add("theme-transitioning");
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+    setTheme((prev) => {
+      const next = prev === "dark" ? "light" : "dark";
+      // Apply theme immediately so CSS variables take effect this frame
+      document.documentElement.dataset.theme = next;
+      localStorage.setItem("claudio-theme", next);
+      return next;
+    });
     setTimeout(() => {
       document.documentElement.classList.remove("theme-transitioning");
     }, 500);

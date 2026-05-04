@@ -106,17 +106,28 @@ export class NeteaseNcmService implements NcmService {
   }
 
   private mapSong(raw: any): SongSearchResult {
-    const artists = raw.artists ?? raw.ar ?? [];
-    const album = raw.album ?? raw.al ?? {};
-    const rawCover = album.picUrl ?? album.pic_url ?? "";
-    const coverUrl = rawCover ? `/api/cover?url=${encodeURIComponent(rawCover)}` : "";
+    // Handle artists: array of objects, array of strings, or single string
+    let artistStr = "";
+    const artists = raw.artists ?? raw.ar ?? raw.artist ?? [];
+    if (typeof artists === "string") {
+      artistStr = artists;
+    } else if (Array.isArray(artists)) {
+      artistStr = artists.map((a: any) => typeof a === "string" ? a : a.name ?? "").filter(Boolean).join(", ");
+    }
+
+    // Handle album: object or string
+    const albumRaw = raw.album ?? raw.al ?? {};
+    const albumObj = typeof albumRaw === "string" ? { name: albumRaw } : albumRaw;
+    const rawCover = albumObj.picUrl ?? albumObj.pic_url ?? raw.coverUrl ?? raw.picUrl ?? "";
+    const coverUrl = rawCover ? (rawCover.startsWith("/api/") ? rawCover : `/api/cover?url=${encodeURIComponent(rawCover)}`) : "";
+
     return {
       id: String(raw.id),
       title: raw.name ?? raw.title ?? "",
-      artist: artists.map((a: any) => a.name).join(", "),
-      album: album.name ?? "",
+      artist: artistStr,
+      album: albumObj.name ?? raw.albumName ?? "",
       coverUrl,
-      durationMs: raw.duration ?? raw.dt ?? 0,
+      durationMs: raw.duration ?? raw.dt ?? raw.durationMs ?? 0,
     };
   }
 

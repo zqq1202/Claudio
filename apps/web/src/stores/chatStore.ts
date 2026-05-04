@@ -194,7 +194,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
                                     case "chunk":
                                         collectedText += data.text;
-                                        set({ streamingText: collectedText });
+                                        // Strip raw JSON code blocks from display while streaming
+                                        const displayText = collectedText.replace(/```json\s*[\s\S]*?```/g, "").trim();
+                                        set({ streamingText: displayText || "🎵 正在为你挑选音乐..." });
                                         break;
 
                                     case "reply":
@@ -241,7 +243,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 }
 
                 // Build the final AI message
-                const displayText = structuredReply?.say || collectedText || "已为你生成播放列表";
+                const cleanedText = collectedText.replace(/```json\s*[\s\S]*?```/g, "").trim();
+                const displayText = structuredReply?.say || cleanedText || "已为你生成播放列表";
 
                 // Convert structured play to RecommendedSong if we have them
                 const finalSongs = structuredReply?.play

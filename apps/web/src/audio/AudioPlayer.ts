@@ -95,7 +95,11 @@ class AudioPlayerManager {
   async play() {
     try {
       this.pendingPlay = true;
-      await this.audio.play();
+      // Only attempt immediate play if audio is already buffered;
+      // otherwise let the canplay event handler trigger playback
+      if (this.audio.readyState >= 3) {
+        await this.audio.play();
+      }
     } catch (err) {
       console.warn("[audio] Play failed (autoplay blocked?):", err);
       this.pendingPlay = false;
