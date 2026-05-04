@@ -12,6 +12,7 @@ import AudioVisualizer from "../components/AudioVisualizer";
 import FluidBlobs from "../components/FluidBlobs";
 
 import SpectrumBars from "../components/SpectrumBars";
+import CursorGlow from "../components/CursorGlow";
 import SearchPanel from "../components/SearchPanel";
 import DjPanel from "../components/DjPanel";
 import UserPanel from "../components/UserPanel";
@@ -413,6 +414,9 @@ export default function PlayerPage() {
 
       {/* Bottom spectrum bars */}
       <SpectrumBars active={isPlaying} />
+
+      {/* Cursor glow effect */}
+      <CursorGlow />
 
       {/* Save Playlist Dialog */}
       {showSaveDialog && (
