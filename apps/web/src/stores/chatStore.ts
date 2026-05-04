@@ -123,7 +123,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
                             songId: r.id,
                             title: r.title,
                             artist: r.artist,
-                            coverUrl: r.coverUrl,
+                            coverUrl: r.coverUrl || `/api/song/cover?id=${encodeURIComponent(r.id)}`,
                             audioUrl: `/api/audio?id=${encodeURIComponent(r.id)}&title=${encodeURIComponent(r.title)}&artist=${encodeURIComponent(r.artist)}`,
                         }));
                         const aiMsg: ChatMessage = {
@@ -195,8 +195,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
                                     case "chunk":
                                         collectedText += data.text;
-                                        // Strip raw JSON code blocks from display while streaming
-                                        const displayText = collectedText.replace(/```json\s*[\s\S]*?```/g, "").trim();
+                                        // Strip raw JSON code blocks AND bare JSON objects from display
+                                        let displayText = collectedText
+                                            .replace(/```json\s*[\s\S]*?```/g, "")
+                                            .trim();
+                                        // If text starts with { and likely contains JSON, hide it
+                                        if (displayText.startsWith("{") && (displayText.includes('"say"') || displayText.includes('"play"'))) {
+                                            displayText = "";
+                                        }
                                         set({ streamingText: displayText || "🎵 正在为你挑选音乐..." });
                                         break;
 
@@ -205,7 +211,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
                                         set({ streamingReply: structuredReply });
                                         // Speak segue if present
                                         if (structuredReply.segue) {
-                                            speak(structuredReply.segue);
+                                            speak(structuredReply.segue).catch(() => {});
                                         }
                                         break;
 
@@ -217,7 +223,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
                                                 songId: item.songId,
                                                 title: item.title ?? "Unknown",
                                                 artist: item.artist ?? "",
-                                                coverUrl: item.coverUrl,
+                                                coverUrl: item.coverUrl || `/api/song/cover?id=${encodeURIComponent(item.id)}`,
                                                 reason: item.reason,
                                                 audioUrl: item.audioUrl,
                                             };
@@ -243,6 +249,22 @@ export const useChatStore = create<ChatState>((set, get) => ({
                     }
                 }
 
+                // If no structured reply was received, try to parse collectedText as JSON
+                if (!structuredReply) {
+                    try {
+                        const obj = JSON.parse(collectedText);
+                        if (obj.say) structuredReply = obj;
+                    } catch {
+                        const jsonMatch = collectedText.match(/\{[\s\S]*"say"[\s\S]*\}/);
+                        if (jsonMatch) {
+                            try {
+                                const obj = JSON.parse(jsonMatch[0]);
+                                if (obj.say) structuredReply = obj;
+                            } catch {}
+                        }
+                    }
+                }
+
                 // Build the final AI message
                 const cleanedText = collectedText.replace(/```json\s*[\s\S]*?```/g, "").trim();
                 const displayText = structuredReply?.say || cleanedText || "已为你生成播放列表";
@@ -254,7 +276,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
                         songId: s.id,
                         title: s.name,
                         artist: s.artist,
-                        coverUrl: s.cover,
+                        coverUrl: s.cover || `/api/song/cover?id=${encodeURIComponent(s.id)}`,
                         audioUrl: `/api/audio?id=${encodeURIComponent(s.id)}&title=${encodeURIComponent(s.name ?? "")}&artist=${encodeURIComponent(s.artist ?? "")}`,
                     }))
                     : collectedSongs;

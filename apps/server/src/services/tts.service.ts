@@ -56,20 +56,43 @@ export class FishTtsService implements TtsService {
 
     try {
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 10000);
+      const timer = setTimeout(() => controller.abort(), 30000);
 
-      const body: Record<string, string> = { text };
-      if (this.voiceId) body.reference_id = this.voiceId;
+      const body: Record<string, unknown> = {
+        text,
+        reference_id: this.voiceId,
+        format: "mp3",
+        mp3_bitrate: 128,
+        normalize: true,
+        latency: "normal",
+      };
 
-      const res = await fetch("https://api.fish.audio/v1/tts", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${this.apiKey}`,
-        },
-        body: JSON.stringify(body),
-        signal: controller.signal,
-      });
+      const proxyUrl = process.env.HTTPS_PROXY || process.env.https_proxy;
+      const url = "https://api.fish.audio/v1/tts";
+      const headers = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${this.apiKey}`,
+      };
+      const bodyStr = JSON.stringify(body);
+
+      let res: Response;
+      if (proxyUrl) {
+        const { ProxyAgent, fetch: undiciFetch } = await import("undici");
+        res = await undiciFetch(url, {
+          method: "POST",
+          headers,
+          body: bodyStr,
+          signal: controller.signal,
+          dispatcher: new ProxyAgent(proxyUrl),
+        }) as unknown as Response;
+      } else {
+        res = await fetch(url, {
+          method: "POST",
+          headers,
+          body: bodyStr,
+          signal: controller.signal,
+        });
+      }
 
       clearTimeout(timer);
 

@@ -3,6 +3,7 @@ import { useChatStore, type ChatMessage, type RecommendedSong } from "../stores/
 import { usePlayerStore } from "../stores/playerStore";
 import type { QueueItem, StructuredReply } from "../api/client";
 import SongCard from "./SongCard";
+import { speak } from "../utils/voiceSynth";
 
 export default function ChatArea() {
     const { messages, streamingText, streamingSongs, streamingReply, isStreaming, error } = useChatStore();
@@ -171,14 +172,7 @@ function StructuredContent({
             {reply.segue && (
                 <div
                     className="chat-segue"
-                    onClick={() => {
-                        // Speak the segue text using Web Speech API
-                        if ("speechSynthesis" in window) {
-                            const utterance = new SpeechSynthesisUtterance(reply.segue);
-                            utterance.lang = "zh-CN";
-                            window.speechSynthesis.speak(utterance);
-                        }
-                    }}
+                    onClick={() => speak(reply.segue!)}
                     role="button"
                     tabIndex={0}
                     onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLElement).click()}

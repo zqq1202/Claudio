@@ -9,8 +9,8 @@
   --bg-deep: #0b0b10;
   --bg-primary: #101018;
   --bg-secondary: #161620;
-  --bg-card: #1a1a26;
-  --bg-card-upper: #12121c;
+  --bg-card: rgba(26, 26, 38, 0.65);
+  --bg-card-upper: rgba(18, 18, 28, 0.5);
   --bg-glass: rgba(255, 255, 255, 0.04);
   --bg-glass-strong: rgba(255, 255, 255, 0.07);
 
@@ -264,9 +264,9 @@ body::after {
   transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
               visibility 0.3s,
               transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  background: var(--bg-card);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(26, 26, 38, 0.75);
+  backdrop-filter: blur(20px) saturate(1.1);
+  -webkit-backdrop-filter: blur(20px) saturate(1.1);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   z-index: 100;
@@ -664,9 +664,14 @@ body::after {
 .player-card {
   border-radius: var(--radius-xl);
   overflow: hidden;
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-card);
+  border: 1px solid rgba(94, 232, 197, 0.15);
+  box-shadow:
+    var(--shadow-card),
+    0 0 30px rgba(94, 232, 197, 0.08),
+    inset 0 0 30px rgba(94, 232, 197, 0.03);
   background: var(--bg-card);
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
   animation: cardEnter 0.6s ease-out;
   position: relative;
 }
@@ -678,7 +683,9 @@ body::after {
 
 /* — Upper: DJ Status Area — */
 .player-upper {
-  background: var(--bg-card-upper);
+  background: rgba(18, 18, 28, 0.5);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   padding: 20px 24px 16px;
   position: relative;
   overflow: hidden;
@@ -1035,12 +1042,29 @@ body::after {
   height: 32px;
 }
 
+@keyframes waveform-pulse {
+  0%, 100% { height: 4px; }
+  20% { height: calc(6px + var(--bar-index) * 0.4px); }
+  40% { height: calc(4px + var(--bar-index) * 0.3px); }
+  60% { height: calc(10px + var(--bar-index) * 0.2px); }
+  80% { height: calc(5px + var(--bar-index) * 0.35px); }
+}
+
 .waveform-bar {
   flex: 1;
   border-radius: 1px;
   background: var(--text-dim);
   min-height: 3px;
-  transition: height 0.1s ease, background 0.3s ease;
+  height: 4px;
+  animation: waveform-pulse 1.2s ease-in-out infinite;
+  animation-delay: calc(var(--bar-index, 0) * -0.08s);
+  animation-play-state: paused;
+  animation-fill-mode: both;
+  transition: background 0.3s ease;
+}
+
+.waveform-bar.animating {
+  animation-play-state: running;
 }
 
 .waveform-bar.active {
@@ -1995,7 +2019,7 @@ body::after {
   font-size: 16px;
   font-weight: 600;
   color: var(--text-primary);
-  text-shadow: 0 0 20px rgba(94, 232, 197, 0.3);
+  text-shadow: 0 0 20px color-mix(in srgb, var(--color-primary) 30%, transparent);
 }
 
 .lyrics-empty {
@@ -2056,8 +2080,9 @@ body::after {
 .karaoke-line-wrapper.active .karaoke-text {
   font-size: 18px;
   font-weight: 700;
-  color: var(--text-primary);
-  text-shadow: 0 0 20px rgba(94,232,197,0.1);
+  color: var(--color-primary);
+  text-shadow: 0 0 20px color-mix(in srgb, var(--color-primary) 50%, transparent),
+               0 0 40px color-mix(in srgb, var(--color-primary) 25%, transparent);
 }
 
 .karaoke-char {
@@ -2065,34 +2090,51 @@ body::after {
 }
 
 .karaoke-char.lit {
-  color: var(--mint);
-  text-shadow: 0 0 20px var(--mint-glow), 0 0 40px rgba(94,232,197,0.2);
+  color: var(--color-primary);
+  text-shadow: 0 0 12px var(--color-primary),
+               0 0 30px color-mix(in srgb, var(--color-primary) 50%, transparent),
+               0 0 60px color-mix(in srgb, var(--color-primary) 20%, transparent);
+  opacity: 1;
 }
 
 .karaoke-char.unlit {
-  color: var(--text-dim);
+  color: var(--text-secondary);
+  opacity: 0.6;
 }
 
 /* ===== Karaoke Gradient Sweep (NetEase Cloud Style) ===== */
-@property --lyric-progress {
+@property --progress {
   syntax: '<percentage>';
-  inherits: false;
+  inherits: true;
   initial-value: 0%;
 }
 
 .karaoke-sweep {
   color: transparent !important;
+  /* --progress is set via JS on parent .karaoke-line-wrapper.active and inherited here.
+     Do NOT declare --progress: 0% here — it overrides the inherited value! */
   background: linear-gradient(
     to right,
-    var(--mint, #5ee8c5) 0%,
-    var(--mint, #5ee8c5) var(--progress, 0%),
-    var(--text-dim) var(--progress, 0%),
-    var(--text-dim) 100%
+    var(--color-primary) 0%,
+    var(--color-primary) var(--progress, 0%),
+    var(--text-secondary) var(--progress, 0%),
+    var(--text-secondary) 100%
   );
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   font-weight: 700;
+  transition: --progress 0.15s linear;
+}
+
+/* Past lines: fully colored, dimmed */
+.karaoke-line-wrapper.past .karaoke-sweep {
+  --progress: 100% !important;
+}
+
+/* Future lines: fully unlit */
+.karaoke-line-wrapper.future .karaoke-sweep {
+  --progress: 0% !important;
 }
 
 .karaoke-translation {
@@ -3215,6 +3257,15 @@ body::after {
 .chat-segue:hover {
   border-color: var(--mint);
   background: var(--mint-faint);
+}
+
+.chat-segue-text {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-top: 6px;
+  padding: 0 4px;
+  font-style: italic;
 }
 
 .segue-icon {

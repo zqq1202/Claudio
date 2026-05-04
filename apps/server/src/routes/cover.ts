@@ -1,5 +1,7 @@
 import type { FastifyInstance } from "fastify";
 
+const NCM_COOKIE = process.env.NCM_COOKIE ?? "";
+
 export async function coverRoutes(app: FastifyInstance) {
   app.get<{ Querystring: { url: string } }>("/api/cover", async (request, reply) => {
     const { url } = request.query;
@@ -13,6 +15,7 @@ export async function coverRoutes(app: FastifyInstance) {
         headers: {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
           Referer: "https://music.163.com/",
+          ...(NCM_COOKIE ? { Cookie: NCM_COOKIE } : {}),
         },
       });
       if (!res.ok) {

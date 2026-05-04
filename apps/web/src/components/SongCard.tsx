@@ -77,7 +77,23 @@ export default function SongCard({
     >
       <div className="song-card-cover">
         {coverUrl ? (
-          <img src={coverUrl} alt={title} loading="lazy" />
+          <img
+            src={coverUrl}
+            alt={title}
+            loading="lazy"
+            onError={(e) => {
+              const img = e.currentTarget;
+              if (!img.dataset.retried) {
+                img.dataset.retried = "1";
+                fetch(`/api/song/cover?id=${encodeURIComponent(songId)}`)
+                  .then((r) => (r.ok ? r.json() : null))
+                  .then((data) => {
+                    if (data?.coverUrl) img.src = data.coverUrl;
+                  })
+                  .catch(() => {});
+              }
+            }}
+          />
         ) : (
           <div className="song-card-cover-placeholder">♫</div>
         )}

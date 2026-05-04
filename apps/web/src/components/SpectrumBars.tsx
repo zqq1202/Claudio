@@ -38,7 +38,7 @@ export default function SpectrumBars({ active }: Props) {
       if (!audioCtx || !sourceNode) return;
       const analyser = audioCtx.createAnalyser();
       analyser.fftSize = 1024;
-      analyser.smoothingTimeConstant = 0.7;
+      analyser.smoothingTimeConstant = 0.8;
       sourceNode.connect(analyser);
       analyserRef.current = analyser;
       freqDataRef.current = new Uint8Array(analyser.frequencyBinCount);
@@ -111,24 +111,24 @@ export default function SpectrumBars({ active }: Props) {
           target = 0.12 + 0.08 * Math.sin(t * 0.002 + i * 0.3) * (0.5 + 0.5 * Math.sin(t * 0.001));
         }
 
-        // Fast attack (0.5), slow release (0.88) — pop up, float down
-        bars[i] += (target - bars[i]) * (target > bars[i] ? 0.5 : 0.88);
+        // Fast attack (0.65), medium release (0.25) — pop up, float down
+        bars[i] += (target - bars[i]) * (target > bars[i] ? 0.65 : 0.25);
 
         // Sqrt compression for better dynamic range
-        const barHeight = Math.pow(bars[i], 0.7) * h * 0.85;
+        const barHeight = Math.pow(bars[i], 0.65) * h * 0.88;
         const x = i * barWidth + gap / 2;
         const y = h - barHeight;
 
         // Glow effect
         ctx.shadowColor = primaryColor;
-        ctx.shadowBlur = 4 + bars[i] * 8;
+        ctx.shadowBlur = 4 + bars[i] * 10;
 
         // Color gradient — primary color fading to transparent at bottom
         const grad = ctx.createLinearGradient(x, h, x, y);
-        grad.addColorStop(0, toRgba(primaryColor, 0.02));
-        grad.addColorStop(0.3, toRgba(primaryColor, 0.08));
-        grad.addColorStop(0.6, toRgba(primaryColor, 0.25));
-        grad.addColorStop(1, toRgba(primaryColor, 0.65));
+        grad.addColorStop(0, toRgba(primaryColor, 0.08));
+        grad.addColorStop(0.3, toRgba(primaryColor, 0.25));
+        grad.addColorStop(0.6, toRgba(primaryColor, 0.55));
+        grad.addColorStop(1, toRgba(primaryColor, 0.95));
         ctx.fillStyle = grad;
 
         // Rounded top caps

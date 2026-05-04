@@ -55,6 +55,31 @@ function hue2rgb(p: number, q: number, t: number): number {
   return p;
 }
 
+/** Boost saturation and lightness so extracted colors are vivid enough for UI */
+function boostSaturation(r: number, g: number, b: number): number[] {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  if (max === min) return [r, g, b].map(v => Math.round(v * 255));
+  const d = max - min;
+  let s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  let h: number;
+  if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+  else if (max === g) h = ((b - r) / d + 2) / 6;
+  else h = ((r - g) / d + 4) / 6;
+
+  // Boost: min saturation 0.45, min lightness 0.35, max lightness 0.65
+  s = Math.max(s, 0.45);
+  const l2 = Math.min(Math.max(l, 0.35), 0.65);
+  const q = l2 < 0.5 ? l2 * (1 + s) : l2 + s - l2 * s;
+  const p = 2 * l2 - q;
+  return [
+    Math.round(hue2rgb(p, q, h + 1 / 3) * 255),
+    Math.round(hue2rgb(p, q, h) * 255),
+    Math.round(hue2rgb(p, q, h - 1 / 3) * 255),
+  ];
+}
+
 function complementaryColor(rgbStr: string): string {
   const m = rgbStr.match(/(\d+)/g);
   if (!m) return rgbStr;
@@ -106,9 +131,10 @@ export function extractColors(imageUrl: string): Promise<ColorResult | null> {
       }
 
       const colors = simpleKMeans(pixels, 3);
-      const [primary, secondary, accent] = colors.map(
-        (c) => `rgb(${c[0]},${c[1]},${c[2]})`
-      );
+      const [primary, secondary, accent] = colors.map((c) => {
+        const boosted = boostSaturation(c[0], c[1], c[2]);
+        return `rgb(${boosted[0]},${boosted[1]},${boosted[2]})`;
+      });
 
       const root = document.documentElement;
       root.style.setProperty("--color-primary", primary);

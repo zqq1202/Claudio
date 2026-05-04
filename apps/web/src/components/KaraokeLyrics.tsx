@@ -19,7 +19,9 @@ export default function KaraokeLyrics({ songId, currentTimeMs }: Props) {
   const [lines, setLines] = useState<ParsedLine[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const activeLineRef = useRef<HTMLDivElement>(null);
+  const prevDomRef = useRef<HTMLDivElement | null>(null);
   const userScrollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isScrollingRef = useRef(false);
   const [autoScroll, setAutoScroll] = useState(true);
 
   // Time in ref — direct DOM update via rAF, NOT React re-renders
@@ -66,6 +68,11 @@ export default function KaraokeLyrics({ songId, currentTimeMs }: Props) {
 
       // Update React state only on change
       if (idx !== prevIdxRef.current) {
+        // Reset previous line's --progress before switching
+        if (prevDomRef.current && prevDomRef.current !== activeLineRef.current) {
+          prevDomRef.current.style.setProperty('--progress', '100%');
+        }
+        prevDomRef.current = activeLineRef.current;
         prevIdxRef.current = idx;
         setActiveIndex(idx);
       }
@@ -73,17 +80,29 @@ export default function KaraokeLyrics({ songId, currentTimeMs }: Props) {
       // Update --progress via direct DOM (no React re-render)
       if (activeLineRef.current && idx >= 0) {
         const line = lines[idx];
-        let progress: number;
+        // Per-character highlighting via direct DOM (both YRC and LRC)
+        const chars = activeLineRef.current.querySelectorAll('.karaoke-char');
+        if (chars.length > 0) {
+          chars.forEach((el) => {
+            const startMs = Number(el.getAttribute('data-start'));
+            if (t >= startMs) {
+              el.className = 'karaoke-char lit';
+            } else {
+              el.className = 'karaoke-char unlit';
+            }
+          });
+        }
         if (line.words && line.words.length > 0) {
-          // Per-word progress (more accurate for yrc enhanced lyrics)
-          progress = calcWordProgress(line.words, t, lines[idx + 1]?.startMs, line.startMs);
+          // Also update --progress for CSS fallback
+          const progress = calcWordProgress(line.words, t, lines[idx + 1]?.startMs, line.startMs);
+          activeLineRef.current.style.setProperty('--progress', `${progress}%`);
         } else {
-          // Simulated progress based on line duration
+          // Standard LRC: update --progress for CSS fallback
           const nextStart = lines[idx + 1]?.startMs ?? (line.startMs + 5000);
           const duration = nextStart - line.startMs;
-          progress = Math.max(0, Math.min(100, ((t - line.startMs) / duration) * 100));
+          const progress = Math.max(0, Math.min(100, ((t - line.startMs) / duration) * 100));
+          activeLineRef.current.style.setProperty("--progress", `${progress}%`);
         }
-        activeLineRef.current.style.setProperty("--progress", `${progress}%`);
       }
 
       raf = requestAnimationFrame(tick);
@@ -93,7 +112,7 @@ export default function KaraokeLyrics({ songId, currentTimeMs }: Props) {
     return () => cancelAnimationFrame(raf);
   }, [lines]);
 
-  // Scroll active line into view — position at 35% from top
+  // Scroll active line into view
   const prevActiveRef = useRef<number>(-1);
   useEffect(() => {
     if (activeIndex !== prevActiveRef.current) {
@@ -104,14 +123,20 @@ export default function KaraokeLyrics({ songId, currentTimeMs }: Props) {
         const containerH = container.clientHeight;
         const lineTop = line.offsetTop;
         const lineH = line.offsetHeight;
+        // 滚动到容器 35% 位置
         const targetScroll = lineTop - containerH * 0.35 + lineH / 2;
-        container.scrollTo({ top: targetScroll, behavior: "smooth" });
+
+        isScrollingRef.current = true;
+        container.scrollTo({ top: targetScroll, behavior: 'smooth' });
+        // smooth scroll 通常 500-800ms，给 1000ms 宽裕时间
+        setTimeout(() => { isScrollingRef.current = false; }, 1000);
       }
     }
   }, [activeIndex, autoScroll]);
 
   // User scroll pauses auto-scroll (8s timeout)
   const handleScroll = useCallback(() => {
+    if (isScrollingRef.current) return;
     if (userScrollTimer.current) clearTimeout(userScrollTimer.current);
     setAutoScroll(false);
     userScrollTimer.current = setTimeout(() => setAutoScroll(true), 8000);
@@ -139,9 +164,47 @@ export default function KaraokeLyrics({ songId, currentTimeMs }: Props) {
             ref={isActive ? activeLineRef : undefined}
             className={className}
           >
-            <div className={`karaoke-text ${isActive ? "karaoke-sweep" : ""}`}>
-              {line.content}
-            </div>
+            {isActive && line.words ? (
+              <div className="karaoke-text karaoke-chars">
+                {line.words.flatMap((word, wi) => {
+                  const wordStart = word.startMillisecond;
+                  const wordEnd = line.words![wi + 1]?.startMillisecond
+                    ?? lines[i + 1]?.startMs
+                    ?? (wordStart + 3000);
+                  const charDuration = (wordEnd - wordStart) / Math.max(word.content.length, 1);
+                  return Array.from(word.content).map((char, ci) => (
+                    <span
+                      key={`${wi}-${ci}`}
+                      className="karaoke-char unlit"
+                      data-start={Math.round(wordStart + ci * charDuration)}
+                    >
+                      {char}
+                    </span>
+                  ));
+                })}
+              </div>
+            ) : isActive ? (
+              <div className="karaoke-text karaoke-chars">
+                {Array.from(line.content).map((char, ci) => {
+                  const totalChars = line.content.length;
+                  const lineDuration = (lines[i + 1]?.startMs ?? (line.startMs + 5000)) - line.startMs;
+                  const charStartMs = line.startMs + (ci / totalChars) * lineDuration;
+                  return (
+                    <span
+                      key={ci}
+                      className="karaoke-char unlit"
+                      data-start={Math.round(charStartMs)}
+                    >
+                      {char}
+                    </span>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="karaoke-text">
+                {line.content}
+              </div>
+            )}
             {line.translation && (
               <div className="karaoke-translation">{line.translation}</div>
             )}

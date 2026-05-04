@@ -20,6 +20,7 @@ export interface LyricResult {
 
 export interface NcmService {
   search(keyword: string, limit?: number): Promise<SongSearchResult[]>;
+  getSongDetail(songId: string): Promise<SongSearchResult | null>;
   getSongUrl(songId: string, title?: string, artist?: string): Promise<SongUrlResult>;
   getLyric(songId: string): Promise<LyricResult>;
   getPlaylistDetail(playlistId: string): Promise<SongSearchResult[]>;
@@ -50,6 +51,10 @@ export class MockNcmService implements NcmService {
       });
     }
     return results;
+  }
+
+  async getSongDetail(songId: string): Promise<SongSearchResult | null> {
+    return null;
   }
 
   async getSongUrl(songId: string, title?: string, artist?: string): Promise<SongUrlResult> {
@@ -141,6 +146,16 @@ export class NeteaseNcmService implements NcmService {
       return songs.map((s: any) => this.mapSong(s));
     } catch {
       return [];
+    }
+  }
+
+  async getSongDetail(songId: string): Promise<SongSearchResult | null> {
+    try {
+      const data = await this.fetchJson<any>("/song/detail", { ids: songId });
+      const songs = data?.songs ?? [];
+      return songs.length > 0 ? this.mapSong(songs[0]) : null;
+    } catch {
+      return null;
     }
   }
 

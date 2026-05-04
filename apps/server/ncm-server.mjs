@@ -197,6 +197,19 @@ const server = http.createServer(async (req, res) => {
         res.statusCode = 500;
         res.end(JSON.stringify({ error: e.message }));
       }
+    } else if (url.pathname === "/song/detail") {
+      const ids = url.searchParams.get("ids") ?? "";
+      const idList = ids.split(",").filter(Boolean);
+      if (idList.length === 0) {
+        res.statusCode = 400;
+        res.end(JSON.stringify({ error: "missing ids" }));
+        return;
+      }
+      const data = await ncmPost("/weapi/v3/song/detail", {
+        c: JSON.stringify(idList.map(id => ({ id }))),
+      });
+      const songs = (data?.songs ?? []).map(mapSong);
+      res.end(JSON.stringify({ songs }));
     } else if (url.pathname === "/recommend/songs") {
       const data = await ncmPost("/weapi/v3/playlist/detail", { id: "3778678", n: 100000, s: 8 });
       res.end(JSON.stringify({ data: { dailySongs: (data?.playlist?.tracks ?? []).slice(0, 30).map(mapSong) } }));

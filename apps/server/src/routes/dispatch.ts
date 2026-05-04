@@ -43,6 +43,22 @@ function detectSearch(text: string): string | null {
 }
 
 export async function dispatchRoutes(app: FastifyInstance) {
+  // GET /api/song/cover?id=xxx — fetch cover URL by NCM song ID
+  app.get<{ Querystring: { id: string } }>("/api/song/cover", async (request, reply) => {
+    const { id } = request.query;
+    if (!id) return reply.code(400).send({ error: "missing id" });
+    try {
+      const { ncm } = app.services;
+      const detail = await ncm.getSongDetail(id);
+      if (detail?.coverUrl) {
+        return { coverUrl: detail.coverUrl };
+      }
+      return reply.code(404).send({ error: "not found" });
+    } catch {
+      return reply.code(500).send({ error: "search failed" });
+    }
+  });
+
   app.post<{ Body: { message: string } }>("/api/dispatch", async (request, reply) => {
     const { message } = DispatchSchema.parse(request.body);
     const trimmed = message.trim();
@@ -105,10 +121,15 @@ export async function dispatchRoutes(app: FastifyInstance) {
       if (chatReply.play && chatReply.play.length > 0) {
         for (const song of chatReply.play) {
           try {
-            const results = await ncm.search(`${song.artist} ${song.name}`, 1);
+            // Try artist + name first
+            let results = await ncm.search(`${song.artist} ${song.name}`, 1);
+            // Fallback: name only
+            if (results.length === 0) {
+              results = await ncm.search(song.name, 1);
+            }
             if (results.length > 0) {
               song.id = results[0].id;
-              if (!song.cover) song.cover = results[0].coverUrl;
+              song.cover = results[0].coverUrl;
             }
           } catch {
             // Keep original id if search fails
