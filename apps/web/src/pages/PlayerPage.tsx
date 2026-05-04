@@ -10,7 +10,7 @@ import ChatArea from "../components/ChatArea";
 import QueueList from "../components/QueueList";
 import AudioVisualizer from "../components/AudioVisualizer";
 import FluidBlobs from "../components/FluidBlobs";
-import BorderGlow from "../components/BorderGlow";
+
 import SpectrumBars from "../components/SpectrumBars";
 import SearchPanel from "../components/SearchPanel";
 import DjPanel from "../components/DjPanel";
@@ -191,9 +191,6 @@ export default function PlayerPage() {
       {/* Fluid blob background */}
       <FluidBlobs bass={bass} mid={mid} />
 
-      {/* Border wave glow */}
-      <BorderGlow />
-
       {/* Player Card - Always Visible */}
       <div className="player-card">
         <div className="player-upper">
@@ -373,23 +370,38 @@ export default function PlayerPage() {
                 onClick={toggleShuffle}
                 title={`Shuffle: ${shuffle ? "On" : "Off"}`}
               >
-                🔀
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
               </button>
-              <button className="ctrl-btn" onClick={() => usePlayerStore.getState().previous()}>⏮</button>
+              <button className="ctrl-btn" onClick={() => usePlayerStore.getState().previous()}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+              </button>
               <button className="ctrl-btn play-btn" onClick={() => usePlayerStore.getState().togglePlay()}>
-                {isPlaying ? "⏸" : "▶"}
+                {isPlaying
+                  ? <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>
+                  : <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                }
               </button>
-              <button className="ctrl-btn" onClick={() => usePlayerStore.getState().next()}>⏭</button>
+              <button className="ctrl-btn" onClick={() => usePlayerStore.getState().next()}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+              </button>
               <button
                 className={`ctrl-btn ${repeatMode !== "off" ? "active-mode" : ""}`}
                 onClick={cycleRepeat}
                 title={`Repeat: ${repeatMode}`}
               >
-                {repeatMode === "one" ? "🔂" : "🔁"}
+                {repeatMode === "one"
+                  ? <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/><text x="12" y="14" textAnchor="middle" fontSize="8" fill="currentColor" stroke="none" fontWeight="700">1</text></svg>
+                  : <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+                }
               </button>
               <div className="player-bar-right">
                 <button className="volume-btn" onClick={toggleMute} title={isMuted ? "Unmute" : "Mute"}>
-                  {isMuted ? "🔇" : volume < 0.5 ? "🔉" : "🔊"}
+                  {isMuted
+                    ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+                    : volume < 0.5
+                      ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                      : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                  }
                 </button>
                 <input
                   className="volume-slider"

@@ -22,7 +22,11 @@ export default function ParticleCanvas() {
   const animRef = useRef<number>(0);
 
   const burst = useCallback((x: number, y: number, color?: string) => {
-    for (let i = 0; i < 60; i++) {
+    // 粒子数量上限：超过 200 时裁剪到 150
+    if (particlesRef.current.length > 200) {
+      particlesRef.current = particlesRef.current.slice(-150);
+    }
+    for (let i = 0; i < 30; i++) {
       const angle = Math.random() * Math.PI * 2;
       const speed = 2 + Math.random() * 4;
       particlesRef.current.push({
@@ -53,7 +57,9 @@ export default function ParticleCanvas() {
       canvas.height = window.innerHeight;
     }
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // 半透明黑色覆盖产生拖尾效果，比 clearRect 更高效
+    ctx.fillStyle = "rgba(0, 0, 0, 0.15)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     const alive: Particle[] = [];
     for (const p of particlesRef.current) {

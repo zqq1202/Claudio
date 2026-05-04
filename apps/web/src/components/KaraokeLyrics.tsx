@@ -40,33 +40,14 @@ export default function KaraokeLyrics({ songId, currentTimeMs }: Props) {
     }
   }, [songId, fetchLyric]);
 
-  // Auto-scroll on user interaction
+  // 用户手动滚动时暂停自动滚动 5 秒
   const handleScroll = useCallback(() => {
     if (userScrollTimer.current) clearTimeout(userScrollTimer.current);
     setAutoScroll(false);
-    userScrollTimer.current = setTimeout(() => setAutoScroll(true), 3000);
+    userScrollTimer.current = setTimeout(() => setAutoScroll(true), 5000);
   }, []);
 
-  // Scroll active line into view — only within the karaoke container, not the whole page
-  useEffect(() => {
-    if (autoScroll && activeRef.current && containerRef.current) {
-      const container = containerRef.current;
-      const active = activeRef.current;
-      const containerRect = container.getBoundingClientRect();
-      const activeRect = active.getBoundingClientRect();
-
-      // Only scroll if the active line is not already visible in the container
-      const isVisible =
-        activeRect.top >= containerRect.top && activeRect.bottom <= containerRect.bottom;
-      if (!isVisible) {
-        const offsetTop = active.offsetTop - container.offsetTop;
-        const targetScroll = offsetTop - container.clientHeight / 2 + active.clientHeight / 2;
-        container.scrollTo({ top: targetScroll, behavior: "smooth" });
-      }
-    }
-  }, [currentTimeMs, autoScroll]);
-
-  // Find active line index
+  // 找到当前激活行索引
   const activeIndex = useMemo(() => {
     if (lines.length === 0) return -1;
     let idx = -1;
@@ -79,6 +60,17 @@ export default function KaraokeLyrics({ songId, currentTimeMs }: Props) {
     }
     return idx;
   }, [lines, currentTimeMs]);
+
+  // 仅在激活行变化时触发滚动，避免每帧都检查
+  const prevActiveRef = useRef<number>(-1);
+  useEffect(() => {
+    if (activeIndex !== prevActiveRef.current) {
+      prevActiveRef.current = activeIndex;
+      if (autoScroll && activeRef.current) {
+        activeRef.current.scrollIntoView({ block: "center", behavior: "smooth" });
+      }
+    }
+  }, [activeIndex, autoScroll]);
 
   if (lines.length === 0) {
     return (

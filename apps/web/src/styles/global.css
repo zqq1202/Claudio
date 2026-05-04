@@ -814,23 +814,21 @@ body::after {
 
 /* — Lower: Song Info Area — */
 .player-lower {
-  padding: 24px;
+  padding: 20px 24px;
   background: var(--bg-card);
 }
 
 .song-title {
-  font-size: 22px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-  line-height: 1.2;
+  font-size: 20px;
+  font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 4px;
+  line-height: 1.3;
 }
 
 .song-artist {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--text-secondary);
-  margin-bottom: 20px;
+  margin-top: 2px;
 }
 
 
@@ -856,16 +854,17 @@ body::after {
 
 .progress-track {
   flex: 1;
-  height: 3px;
-  background: var(--bg-glass-strong);
+  height: 4px;
+  background: var(--bg-glass);
   border-radius: 2px;
   position: relative;
   cursor: pointer;
-  transition: height var(--t-fast);
+  transition: height 0.2s;
 }
 
-.progress-track:hover {
-  height: 5px;
+.progress-track:hover,
+.progress-track.dragging {
+  height: 6px;
 }
 
 .progress-fill {
@@ -2037,13 +2036,13 @@ body::after {
 }
 
 .karaoke-line-wrapper.past {
-  opacity: 0.25;
-  transform: scale(0.96);
+  opacity: 0.3;
+  transform: scale(0.95);
 }
 
 .karaoke-line-wrapper.future {
-  opacity: 0.45;
-  transform: scale(0.98);
+  opacity: 0.5;
+  transform: scale(0.97);
 }
 
 .karaoke-line-wrapper.active {
@@ -2053,16 +2052,17 @@ body::after {
 
 .karaoke-text {
   font-size: 15px;
-  line-height: 1.8;
+  line-height: 2;
   font-weight: 500;
   color: var(--text-secondary);
+  transition: all 0.3s ease;
 }
 
 .karaoke-line-wrapper.active .karaoke-text {
   font-size: 17px;
   font-weight: 700;
   color: var(--text-primary);
-  text-shadow: 0 0 30px rgba(94,232,197,0.15);
+  text-shadow: 0 0 20px rgba(94,232,197,0.1);
 }
 
 .karaoke-char {
@@ -4125,18 +4125,24 @@ button {
   display: block;
 }
 
+.cover-disc {
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
 .cover-disc.spinning {
-  animation: discSpin 20s linear infinite;
+  animation: discSpin 8s linear infinite;
+  will-change: transform;
 }
 
 .cover-disc.paused {
-  animation: discSpin 20s linear infinite;
+  animation: discSpin 8s linear infinite;
   animation-play-state: paused;
 }
 
 @keyframes discSpin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from { transform: rotate(0deg) translateZ(0); }
+  to { transform: rotate(360deg) translateZ(0); }
 }
 
 .lyrics-section {
@@ -4144,7 +4150,7 @@ button {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  height: 440px;
+  max-height: 440px;
 }
 
 .lyrics-header {
