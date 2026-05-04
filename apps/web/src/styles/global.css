@@ -4095,6 +4095,8 @@ button {
 .lyrics-header {
   margin-bottom: 16px;
   flex-shrink: 0;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
 }
 
 .lyrics-title-row {
