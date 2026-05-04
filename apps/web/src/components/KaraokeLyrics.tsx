@@ -231,7 +231,10 @@ function parseLyrics(lrc: string, tlyric?: string, yrc?: string): ParsedLine[] {
       );
       if (enhancedLines.length > 0) {
         const translationMap = parseTranslationMap(tlyric);
-        return enhancedLines.map((line) => ({
+        // Filter out metadata lines (作词/作曲/编曲 etc.)
+        const METADATA_RE = /^(作词|作曲|编曲|制作人|录音|混音|母带|吉他|贝斯|鼓|键盘|弦乐|大提琴|小提琴|钢琴|和声|和音|词|曲|演唱|演奏|后期|封面|美工|翻译|文案|出品|监制|企划|统筹|宣传|发行)\s*[:：]/;
+        const realEnhanced = enhancedLines.filter((line) => !METADATA_RE.test(line.content.trim()));
+        return realEnhanced.map((line) => ({
           startMs: line.startMillisecond,
           content: line.content,
           words: line.words,
@@ -249,9 +252,14 @@ function parseLyrics(lrc: string, tlyric?: string, yrc?: string): ParsedLine[] {
     (l): l is LyricLine => l.type === LineType.LYRIC
   );
 
+  // Filter out metadata-like lines (作词, 作曲, 编曲, etc.)
+  const METADATA_RE = /^(作词|作曲|编曲|制作人|录音|混音|母带|吉他|贝斯|鼓|键盘|弦乐|大提琴|小提琴|钢琴|和声|和音|词|曲|演唱|演奏|后期|封面|美工|翻译|文案|出品|监制|企划|统筹|宣传|发行)\s*[:：]/;
+
+  const realLines = lyricLines.filter((line) => !METADATA_RE.test(line.content.trim()));
+
   const translationMap = parseTranslationMap(tlyric);
 
-  return lyricLines.map((line) => ({
+  return realLines.map((line) => ({
     startMs: line.startMillisecond,
     content: line.content,
     words: null,
