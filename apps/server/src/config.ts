@@ -33,9 +33,9 @@ export function loadConfig(): AppConfig {
     port: Number(env("SERVER_PORT", "8080")),
     databaseUrl: env("DATABASE_URL", "file:./data/ai-radio.sqlite"),
     claude: {
-      apiKey: env("CLAUDE_API_KEY"),
-      baseUrl: env("CLAUDE_BASE_URL", "https://api.anthropic.com"),
-      model: env("CLAUDE_MODEL", "claude-sonnet-4-20250514"),
+      apiKey: env("ARK_API_KEY"),
+      baseUrl: env("ARK_BASE_URL", "https://ark.cn-beijing.volces.com"),
+      model: env("ARK_MODEL", "doubao-seed-2-0-lite-260215"),
     },
     ncm: {
       apiBaseUrl: env("NCM_API_BASE_URL", "http://localhost:3000"),

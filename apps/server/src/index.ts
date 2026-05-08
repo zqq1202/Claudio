@@ -32,7 +32,7 @@ import { MockClaudeService, ClaudeApiService } from "./services/claude.service.j
 import { readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { MockTtsService, FishTtsService } from "./services/tts.service.js";
+import { MockTtsService, FishTtsService, EdgeTtsService } from "./services/tts.service.js";
 import { MockWeatherService, OpenWeatherService, WttrInService } from "./services/weather.service.js";
 import { MockCalendarService, FeishuCalendarService } from "./services/calendar.service.js";
 import { MockUpnpService } from "./services/upnp.service.js";
@@ -69,9 +69,12 @@ const claude = claudeApiKey
     })()
   : new MockClaudeService();
 const fishApiKey = getSetting("fish_audio_api_key") ?? config.fishAudio.apiKey;
-const tts = fishApiKey
-  ? new FishTtsService({ apiKey: fishApiKey, voiceId: config.fishAudio.voiceId })
-  : new MockTtsService();
+const edgeVoice = getSetting("edge_tts_voice") ?? process.env.EDGE_TTS_VOICE;
+const tts = edgeVoice
+  ? new EdgeTtsService({ voice: edgeVoice })
+  : fishApiKey
+    ? new FishTtsService({ apiKey: fishApiKey, voiceId: config.fishAudio.voiceId })
+    : new MockTtsService();
 const weatherApiKey = getSetting("openweather_api_key") ?? config.openWeather.apiKey;
 const weather = weatherApiKey
   ? new OpenWeatherService({ apiKey: weatherApiKey, city: config.openWeather.city })
